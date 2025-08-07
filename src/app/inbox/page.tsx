@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { PrismaClient } from '@prisma/client';
-import InboxClient from './InboxClient';
+import InboxClient, { UserNumber } from './InboxClient';
 
 const prisma = new PrismaClient();
 
@@ -38,7 +38,7 @@ export default async function InboxPage() {
   // Get user's phone numbers
   const userNumbers = await prisma.userNumber.findMany({
     where: { userId: user.id },
-  });
+  }) as unknown as UserNumber[];
 
   await prisma.$disconnect();
 

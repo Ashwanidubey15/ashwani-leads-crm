@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 
-interface UserNumber {
+export interface UserNumber {
   id: string;
   number: string;
   label: string;
