@@ -3,7 +3,9 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { PrismaClient } from "@prisma/client";
 import { compare } from "bcryptjs";
 
-const prisma = new PrismaClient();
+const prisma = global.prisma || new PrismaClient();
+
+if (process.env.NODE_ENV === "development") global.prisma = prisma;
 
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
