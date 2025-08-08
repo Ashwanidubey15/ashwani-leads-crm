@@ -103,6 +103,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       if (vapiRes.ok) {
         const responseData = await vapiRes.json();
+
+        console.log("responseData", responseData)
         
         // Save the phone number to our database
         const userNumber = await prisma.userNumber.create({
@@ -112,6 +114,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             label: label || "Business Line",
             purpose: purpose || "inbound",
             assistantId: assistant.id,
+            phoneNumberId:responseData.id
           },
         });
         

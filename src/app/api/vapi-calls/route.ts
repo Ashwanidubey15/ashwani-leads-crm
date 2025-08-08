@@ -36,7 +36,8 @@ export async function GET(request: NextRequest) {
     const allCalls = await fetchAllCalls();
 
     // Filter calls to only include those made to/from user's phone numbers
-    const userPhoneNumberIds = userNumbers.map(un => un.id);
+    const userPhoneNumberIds = userNumbers.map(un => un.phoneNumberId);
+    console.log("userPhoneNumberIds",userPhoneNumberIds)
     const filteredCalls = allCalls.filter(call => 
       userPhoneNumberIds.includes(call.phoneNumberId)
     );

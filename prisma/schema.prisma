@@ -68,6 +68,7 @@ model UserNumber {
   number    String
   label     String?
   purpose   String
+  phoneNumberId String?
   assistant Assistant @relation(fields: [assistantId], references: [id], onDelete: Cascade)
   assistantId String
   createdAt DateTime @default(now())

@@ -102,7 +102,7 @@ export interface VapiCall {
 }
 
 export async function fetchAllCalls(): Promise<VapiCall[]> {
-  const publicKey = process.env.VAPI_PUBLIC_KEY;
+  const publicKey = process.env.VAPI_PRIVATE_KEY;
   
   if (!publicKey) {
     throw new Error('VAPI_PUBLIC_KEY not found in environment variables');
