@@ -341,9 +341,9 @@ export default function PhoneNumbersPage() {
                   {loading ? "Purchasing..." : "Purchase Phone Number"}
                 </button>
                 <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
-                  <p className="text-sm text-gray-700 font-medium">
+                  {/* <p className="text-sm text-gray-700 font-medium">
                     💰 Cost: $1.99/month • Includes voice and SMS capabilities
-                  </p>
+                  </p> */}
                 </div>
               </div>
             </div>
@@ -513,10 +513,10 @@ export default function PhoneNumbersPage() {
                             <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                             Receive SMS messages
                           </li>
-                          <li className="flex items-center gap-2">
+                          {/* <li className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                             Manage it through the Vapi dashboard
-                          </li>
+                          </li> */}
                         </ul>
                       </div>
                     </div>

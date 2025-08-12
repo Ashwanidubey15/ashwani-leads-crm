@@ -1,8 +1,12 @@
-import axios from 'axios';
+import { PrismaClient } from "@prisma/client";
+import axios from "axios";
+import { log } from "console";
+import cron from "node-cron";
 
-const VAPI_API_URL = 'https://api.vapi.ai';
+const VAPI_API_URL = "https://api.vapi.ai";
 // Note: Using VAPI_PRIVATE_KEY for all operations (both assistants and phone numbers)
 const VAPI_API_KEY = process.env.VAPI_PRIVATE_KEY;
+const prisma = new PrismaClient();
 
 export interface VapiAssistant {
   id: string;
@@ -100,37 +104,108 @@ export interface VapiCall {
     }>;
   };
 }
-
-export async function fetchAllCalls(): Promise<VapiCall[]> {
+async function fetchAllCallsScheduler(): Promise<VapiCall[]> {
   const publicKey = process.env.VAPI_PRIVATE_KEY;
-  
+
   if (!publicKey) {
-    throw new Error('VAPI_PUBLIC_KEY not found in environment variables');
+    throw new Error("VAPI_PUBLIC_KEY not found in environment variables");
   }
 
-  const response = await fetch('https://api.vapi.ai/call', {
-    method: 'GET',
+  const response = await fetch("https://api.vapi.ai/call", {
+    method: "GET",
     headers: {
-      'Authorization': `Bearer ${publicKey}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${publicKey}`,
+      "Content-Type": "application/json",
     },
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(`Failed to fetch calls: ${errorData.message || response.statusText}`);
+    throw new Error(
+      `Failed to fetch calls: ${errorData.message || response.statusText}`
+    );
+  }
+
+  const calls: VapiCall[] = await response.json();
+  return calls;
+}
+
+// Schedule the job to run every 5 minutes
+cron.schedule("*/10 * * * * *", async () => {
+   console.log("Running every 10 seconds...");
+  try {
+    console.log("test-----")
+    const calls = await fetchAllCallsScheduler();
+    console.log("Fetched calls:", calls.length);
+
+    for (const call of calls) {
+      const existing = await prisma.conversation.findFirst({
+        where: { callId: call.id },
+      });
+      console.log("call", call);
+      if (!existing) {
+        await prisma.conversation.create({
+          data: {
+            callId: call.id,
+            phoneNumber: call.customer.number,
+            duration: 0,
+            status: call.status || "unknown",
+            transcript: call.transcript || null,
+            recordingUrl: call.recordingUrl || null,
+            messages: call.messages || [],
+            contactId: "cme10aqz20008cry50z7v0zhg",
+            summary:call.analysis.summary,
+            phoneNumberId:call.phoneNumberId
+          },
+        });
+        console.log(`Stored call ID: ${call.id}`);
+      } else {
+        console.log(`Call already exists: ${call.id}`);
+      }
+    }
+
+    // You can do more processing here if needed
+  } catch (error) {
+    console.error("Error fetching calls:", error);
+  }
+});
+
+export async function fetchAllCalls(): Promise<VapiCall[]> {
+  const publicKey = process.env.VAPI_PRIVATE_KEY;
+
+  if (!publicKey) {
+    throw new Error("VAPI_PUBLIC_KEY not found in environment variables");
+  }
+
+  const response = await fetch("https://api.vapi.ai/call", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${publicKey}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(
+      `Failed to fetch calls: ${errorData.message || response.statusText}`
+    );
   }
 
   const calls = await response.json();
   return calls;
 }
 
-export async function initiateCall(callRequest: CallRequest): Promise<CallResponse> {
+export async function initiateCall(
+  callRequest: CallRequest
+): Promise<CallResponse> {
   if (!VAPI_API_KEY) {
     throw new Error("VAPI API key is not configured");
   }
 
-  console.log(`Initiating call to ${callRequest.phoneNumber} using assistant ${callRequest.assistantId}`);
+  console.log(
+    `Initiating call to ${callRequest.phoneNumber} using assistant ${callRequest.assistantId}`
+  );
 
   try {
     const response = await axios.post(
@@ -149,7 +224,7 @@ export async function initiateCall(callRequest: CallRequest): Promise<CallRespon
           Authorization: `Bearer ${VAPI_API_KEY}`,
           "Content-Type": "application/json",
         },
-      },
+      }
     );
 
     const callData = response.data;
@@ -163,13 +238,18 @@ export async function initiateCall(callRequest: CallRequest): Promise<CallRespon
       createdAt: callData.createdAt,
     };
   } catch (error: any) {
-    console.error(`Failed to initiate call to ${callRequest.phoneNumber}:`, error.message);
+    console.error(
+      `Failed to initiate call to ${callRequest.phoneNumber}:`,
+      error.message
+    );
 
     if (error.isAxiosError && error.response) {
       console.error(`Error status: ${error.response.status}`);
       console.error(`Error details: ${JSON.stringify(error.response.data)}`);
       throw new Error(
-        `Vapi API error (${error.response.status}): ${JSON.stringify(error.response.data)}`,
+        `Vapi API error (${error.response.status}): ${JSON.stringify(
+          error.response.data
+        )}`
       );
     } else if (error.isAxiosError) {
       console.error(`Network error: ${error.message}`);
@@ -202,29 +282,29 @@ export async function createVapiAssistant(
           messages: [
             {
               content: description,
-              role: "system"
-            }
-          ]
+              role: "system",
+            },
+          ],
         },
         voice: {
           provider: "vapi",
-          voiceId: "Elliot"
+          voiceId: "Elliot",
         },
         transcriber: {
           provider: "deepgram",
           model: "nova-2",
-          language: "en"
+          language: "en",
         },
         firstMessage: firstMessage,
         voicemailMessage: `Hello, this is ${assistantName}. I'm calling to discuss how we might help you. I'll try reaching you again, or feel free to call us back at your convenience.`,
-        endCallMessage: `Thank you for taking the time to discuss your needs with me today. Our team will be in touch with more information soon. Have a great day!`
+        endCallMessage: `Thank you for taking the time to discuss your needs with me today. Our team will be in touch with more information soon. Have a great day!`,
       },
       {
         headers: {
           Authorization: `Bearer ${VAPI_API_KEY}`,
           "Content-Type": "application/json",
         },
-      },
+      }
     );
 
     const assistantId = response.data.id;
@@ -232,13 +312,18 @@ export async function createVapiAssistant(
 
     return assistantId;
   } catch (error: any) {
-    console.error(`Failed to create Vapi assistant ${assistantName}:`, error.message);
+    console.error(
+      `Failed to create Vapi assistant ${assistantName}:`,
+      error.message
+    );
 
     if (error.isAxiosError && error.response) {
       console.error(`Error status: ${error.response.status}`);
       console.error(`Error details: ${JSON.stringify(error.response.data)}`);
       throw new Error(
-        `Vapi API error (${error.response.status}): ${JSON.stringify(error.response.data)}`,
+        `Vapi API error (${error.response.status}): ${JSON.stringify(
+          error.response.data
+        )}`
       );
     } else if (error.isAxiosError) {
       console.error(`Network error: ${error.message}`);
@@ -263,7 +348,10 @@ export async function deleteVapiAssistant(assistantId: string): Promise<void> {
 
     console.log(`Successfully deleted Vapi assistant: ${assistantId}`);
   } catch (error: any) {
-    console.error(`Failed to delete Vapi assistant ${assistantId}:`, error.message);
+    console.error(
+      `Failed to delete Vapi assistant ${assistantId}:`,
+      error.message
+    );
     throw new Error(`Failed to delete Vapi assistant: ${error.message}`);
   }
-} 
+}

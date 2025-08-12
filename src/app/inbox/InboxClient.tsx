@@ -11,7 +11,7 @@ export interface UserNumber {
 }
 
 interface VapiCall {
-  id: string;
+    id: string;
   assistantId: string;
   phoneNumberId: string;
   type: string;
@@ -20,7 +20,7 @@ interface VapiCall {
   transcript: string;
   recordingUrl: string;
   summary: string;
-  createdAt: string;
+   createdAt: string;
   updatedAt: string;
   orgId: string;
   cost: number;
@@ -70,12 +70,13 @@ interface VapiCall {
       secondsFromStart: number;
     }>;
   };
-  contact?: {
+   contact?: {
     id: string;
     name: string;
     email?: string;
     company?: string;
   };
+  
 }
 
 interface InboxClientProps {
@@ -215,7 +216,7 @@ export default function InboxClient({ userNumbers }: InboxClientProps) {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Inbox</h1>
               <p className="mt-1 text-gray-600">
-                View all your calls and conversations from VAPI.ai.
+                View all your calls and conversations here.
               </p>
             </div>
           </div>
@@ -368,11 +369,11 @@ export default function InboxClient({ userNumbers }: InboxClientProps) {
                       </audio>
                     </div>
                     <button
-                      onClick={() => setShowSummary((prev) => !prev)}
+                      onClick={() => setShowSummary(true)}
                       className="px-5 py-3 rounded-2xl text-base font-medium bg-purple-500 text-white hover:bg-purple-600 transition"
                     >
-                      {showSummary ? "Back to Messages" : "Show Summary"}
-                    </button>
+                      Show Summary                    
+                      </button>
                   </div>
                 </div>
                 <div className="px-6 py-6">

@@ -101,6 +101,7 @@ model Contact {
 }
 
 model Conversation {
+  callId       String?   @unique
   id          String   @id @default(cuid())
   contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId   String
@@ -111,4 +112,7 @@ model Conversation {
   recordingUrl String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  messages     Json?
+  phoneNumberId String?
+  summary     String?
 }

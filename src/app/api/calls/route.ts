@@ -158,6 +158,7 @@ export async function POST(request: NextRequest) {
         status: 'in-progress',
         transcript: null,
         recordingUrl: null,
+        messages: [], // initialize with empty array or appropriate value
       },
     });
 
