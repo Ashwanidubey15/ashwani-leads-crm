@@ -131,44 +131,44 @@ async function fetchAllCallsScheduler(): Promise<VapiCall[]> {
 }
 
 // Schedule the job to run every 5 minutes
-cron.schedule("*/10 * * * * *", async () => {
-   console.log("Running every 10 seconds...");
-  try {
-    console.log("test-----")
-    const calls = await fetchAllCallsScheduler();
-    console.log("Fetched calls:", calls.length);
+// cron.schedule("*/10 * * * * *", async () => {
+//    console.log("Running every 10 seconds...");
+//   try {
+//     console.log("test-----")
+//     const calls = await fetchAllCallsScheduler();
+//     console.log("Fetched calls:", calls.length);
 
-    for (const call of calls) {
-      const existing = await prisma.conversation.findFirst({
-        where: { callId: call.id },
-      });
-      console.log("call", call);
-      if (!existing) {
-        await prisma.conversation.create({
-          data: {
-            callId: call.id,
-            phoneNumber: call.customer.number,
-            duration: 0,
-            status: call.status || "unknown",
-            transcript: call.transcript || null,
-            recordingUrl: call.recordingUrl || null,
-            messages: call.messages || [],
-            contactId: "cme10aqz20008cry50z7v0zhg",
-            summary:call.analysis.summary,
-            phoneNumberId:call.phoneNumberId
-          },
-        });
-        console.log(`Stored call ID: ${call.id}`);
-      } else {
-        console.log(`Call already exists: ${call.id}`);
-      }
-    }
+//     for (const call of calls) {
+//       const existing = await prisma.conversation.findFirst({
+//         where: { callId: call.id },
+//       });
+//       console.log("call", call);
+//       if (!existing) {
+//         await prisma.conversation.create({
+//           data: {
+//             callId: call.id,
+//             phoneNumber: call.customer.number,
+//             duration: 0,
+//             status: call.status || "unknown",
+//             transcript: call.transcript || null,
+//             recordingUrl: call.recordingUrl || null,
+//             messages: call.messages || [],
+//             contactId: "cme10aqz20008cry50z7v0zhg",
+//             summary:call.analysis.summary,
+//             phoneNumberId:call.phoneNumberId
+//           },
+//         });
+//         console.log(`Stored call ID: ${call.id}`);
+//       } else {
+//         console.log(`Call already exists: ${call.id}`);
+//       }
+//     }
 
-    // You can do more processing here if needed
-  } catch (error) {
-    console.error("Error fetching calls:", error);
-  }
-});
+//     // You can do more processing here if needed
+//   } catch (error) {
+//     console.error("Error fetching calls:", error);
+//   }
+// });
 
 export async function fetchAllCalls(): Promise<VapiCall[]> {
   const publicKey = process.env.VAPI_PRIVATE_KEY;
