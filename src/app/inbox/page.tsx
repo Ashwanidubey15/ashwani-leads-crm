@@ -2,10 +2,11 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { PrismaClient } from '@prisma/client';
 import InboxClient, { UserNumber } from './InboxClient';
+import { notFound } from 'next/navigation';
 
 const prisma = new PrismaClient();
 
-export default async function InboxPage() {
+export default async function InboxPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.email) {
@@ -35,12 +36,32 @@ export default async function InboxPage() {
     );
   }
 
-  // Get user's phone numbers
+  const locationId = typeof searchParams?.locationId === 'string' ? searchParams.locationId : undefined;
+
+  // Get user's phone numbers, optionally filtered by assistant.locationId
   const userNumbers = await prisma.userNumber.findMany({
-    where: { userId: user.id },
-  }) as unknown as UserNumber[];
+    where: {
+      userId: user.id,
+      ...(locationId ? { assistant: { locationId } } : {}),
+    },
+    include: {
+      assistant: {
+        select: { id: true, locationId: true },
+      },
+    },
+  });
 
   await prisma.$disconnect();
 
-  return <InboxClient userNumbers={userNumbers} />;
+  // Map to the expected UserNumber[] shape used by InboxClient
+  const mapped: UserNumber[] = userNumbers.map((n: any) => ({
+    id: n.id,
+    number: n.number,
+    label: n.label,
+    purpose: n.purpose,
+    createdAt: n.createdAt?.toISOString?.() || String(n.createdAt),
+    phoneNumberId: n.phoneNumberId,
+  }));
+
+  return <InboxClient userNumbers={mapped} locationId={locationId} />;
 } 

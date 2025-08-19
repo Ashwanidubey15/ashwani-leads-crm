@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 
 interface UserNumber {
   id: string;
@@ -27,6 +28,8 @@ interface Assistant {
 
 export default function PhoneNumbersPage() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const locationIdFromUrl = searchParams?.get("locationId") ?? "";
   const [userNumbers, setUserNumbers] = useState<UserNumber[]>([]);
   const [assistants, setAssistants] = useState<Assistant[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,7 +57,8 @@ export default function PhoneNumbersPage() {
   // Fetch user's existing numbers
   async function fetchUserNumbers() {
     try {
-      const res = await fetch("/api/user-numbers");
+      const qs = locationIdFromUrl ? `?locationId=${encodeURIComponent(locationIdFromUrl)}` : "";
+      const res = await fetch(`/api/user-numbers${qs}`);
       if (!res.ok) {
         throw new Error("Failed to fetch user numbers");
       }
@@ -68,7 +72,8 @@ export default function PhoneNumbersPage() {
   // Fetch user's assistants
   async function fetchAssistants() {
     try {
-      const res = await fetch("/api/assistants");
+      const qs = locationIdFromUrl ? `?locationId=${encodeURIComponent(locationIdFromUrl)}` : "";
+      const res = await fetch(`/api/assistants${qs}`);
       if (!res.ok) {
         throw new Error("Failed to fetch assistants");
       }
@@ -172,7 +177,7 @@ export default function PhoneNumbersPage() {
       fetchUserNumbers();
       fetchAssistants();
     }
-  }, [session]);
+  }, [session, locationIdFromUrl]);
 
   if (!session) {
     return (
@@ -513,10 +518,6 @@ export default function PhoneNumbersPage() {
                             <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                             Receive SMS messages
                           </li>
-                          {/* <li className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                            Manage it through the Vapi dashboard
-                          </li> */}
                         </ul>
                       </div>
                     </div>

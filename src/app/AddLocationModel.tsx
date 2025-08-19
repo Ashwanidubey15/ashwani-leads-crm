@@ -1,15 +1,22 @@
 import { useState } from "react";
 
-export default function AddLocationModal({ onClose }: { onClose: () => void })  {
+export default function AddLocationModal({ onClose, onCreated }: { onClose: () => void; onCreated?: (loc: { id: string; address: string }) => void; })  {
   const [address, setAddress] = useState("");
 
   const handleSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
-    await fetch("/api/locations", {
+    const res = await fetch("/api/locations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ address }),
     });
+    if (res.ok) {
+      const data = await res.json();
+      onCreated?.(data.data);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('location:created', { detail: data.data }));
+      }
+    }
     setAddress("");
     onClose(); 
   };

@@ -28,14 +28,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(500).json({ message: "Database model not available" });
       }
 
+      const { locationId } = req.query;
+
       const userNumbers = await prisma.userNumber.findMany({
-        where: { userId: user.id },
+        where: { 
+          userId: user.id,
+          ...(locationId ? { assistant: { locationId: String(locationId) } } : {}),
+        },
         include: {
           assistant: {
             select: {
               id: true,
               name: true,
               description: true,
+              locationId: true,
             }
           }
         },
@@ -114,7 +120,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             label: label || "Business Line",
             purpose: purpose || "inbound",
             assistantId: assistant.id,
-            phoneNumberId:responseData.id
+            phoneNumberId: responseData.id
           },
         });
         

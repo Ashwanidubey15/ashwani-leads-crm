@@ -81,12 +81,12 @@ interface VapiCall {
 
 interface InboxClientProps {
   userNumbers: UserNumber[];
+  locationId?: string;
 }
 
-export default function InboxClient({ userNumbers }: InboxClientProps) {
+export default function InboxClient({ userNumbers, locationId }: InboxClientProps) {
   const [calls, setCalls] = useState<VapiCall[]>([]);
-  const [selectedPhoneNumber, setSelectedPhoneNumber] =
-    useState<UserNumber | null>(null);
+  const [selectedPhoneNumber, setSelectedPhoneNumber] = useState<UserNumber | null>(null);
   const [selectedCall, setSelectedCall] = useState<VapiCall | null>(null);
   const [showCalls, setShowCalls] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
@@ -95,12 +95,13 @@ export default function InboxClient({ userNumbers }: InboxClientProps) {
 
   useEffect(() => {
     fetchVapiCalls();
-  }, []);
+  }, [locationId]);
 
   const fetchVapiCalls = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/vapi-calls");
+      const qs = locationId ? `?locationId=${encodeURIComponent(locationId)}` : "";
+      const response = await fetch(`/api/vapi-calls${qs}`);
       if (response.ok) {
         const data = await response.json();
         setCalls(data.calls || []);
@@ -276,10 +277,9 @@ export default function InboxClient({ userNumbers }: InboxClientProps) {
                           const phoneCalls = getCallsForPhoneNumber(
                             phoneNumber.phoneNumberId
                           );
-                          const firstCall = phoneCalls[0]; // or use phoneCalls.at(-1) for latest call
+                          const firstCall = phoneCalls[0];
                           setSelectedPhoneNumber(phoneNumber);
                           setSelectedCall(firstCall);
-                          // ✅ Set selectedCall to show customer number
                         }}
                       >
                         <div className="flex items-center justify-between">
@@ -417,7 +417,7 @@ export default function InboxClient({ userNumbers }: InboxClientProps) {
                         <div>
                           <h3
                             className="text-lg font-medium text-gray-900 mb-4 cursor-pointer"
-                            onClick={() => setShowCalls(!showCalls)} // toggle on click
+                            onClick={() => setShowCalls(!showCalls)}
                           >
                             Calls {showCalls ? "▲" : "▼"}
                           </h3>
@@ -469,21 +469,6 @@ export default function InboxClient({ userNumbers }: InboxClientProps) {
                         <div className="mt-6">
                           {selectedCall ? (
                             <div>
-                              {/* <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-medium text-gray-900">
-                                  Call Details
-                                </h3>
-                                <span
-                                  className={`px-3 py-1 text-sm rounded-full font-medium ${getStatusColor(
-                                    selectedCall.status
-                                  )}`}
-                                >
-                                  {selectedCall.status}
-                                </span>
-                              </div> */}
-
-                              {/* Call Info Section */}
-
                               {/* Messages */}
                               {!showSummary &&
                                 selectedCall.messages?.length > 0 && (

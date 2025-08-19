@@ -7,7 +7,9 @@ const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    const locations = await prisma.locations.findMany();
+    const locations = await prisma.locations.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
     return NextResponse.json({ success: true, data: locations });
   } catch (error) {
     console.error(" Error fetching locations:", error);

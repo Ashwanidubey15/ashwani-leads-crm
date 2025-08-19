@@ -85,6 +85,8 @@ model Assistant {
   phoneNumbers     UserNumber[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  locationId       String
+  location         Locations @relation(fields: [locationId], references: [id], onDelete: Cascade)
 }
 
 model Contact {
@@ -122,4 +124,5 @@ model Locations {
   address String    
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  assistants Assistant[]
 }
