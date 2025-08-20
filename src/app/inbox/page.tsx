@@ -2,11 +2,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { PrismaClient } from '@prisma/client';
 import InboxClient, { UserNumber } from './InboxClient';
-import { notFound } from 'next/navigation';
 
 const prisma = new PrismaClient();
 
-export default async function InboxPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+export default async function InboxPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.email) {
@@ -36,7 +35,8 @@ export default async function InboxPage({ searchParams }: { searchParams: { [key
     );
   }
 
-  const locationId = typeof searchParams?.locationId === 'string' ? searchParams.locationId : undefined;
+  const sp = await searchParams;
+  const locationId = typeof sp.locationId === 'string' ? sp.locationId : undefined;
 
   // Get user's phone numbers, optionally filtered by assistant.locationId
   const userNumbers = await prisma.userNumber.findMany({

@@ -18,6 +18,7 @@
     "next": "15.4.3",
     "next-auth": "4.24.11",
     "node-cron": "^4.2.1",
+    "openai": "^5.12.2",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
@@ -28,8 +29,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@typescript-eslint/eslint-plugin": "^8.39.0",
-    "@typescript-eslint/parser": "^8.39.0",
+    "@typescript-eslint/eslint-plugin": "^8.40.0",
+    "@typescript-eslint/parser": "^8.40.0",
     "eslint": "^9.32.0",
     "eslint-config-next": "15.4.3",
     "prisma": "^6.13.0",

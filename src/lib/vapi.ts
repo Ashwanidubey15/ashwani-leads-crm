@@ -8,6 +8,12 @@ const VAPI_API_URL = "https://api.vapi.ai";
 const VAPI_API_KEY = process.env.VAPI_PRIVATE_KEY;
 const prisma = new PrismaClient();
 
+// Ensure the cron job is scheduled only once across module reloads
+declare global {
+  // eslint-disable-next-line no-var
+  var __vapiCronStarted: boolean | undefined;
+}
+
 export interface VapiAssistant {
   id: string;
   name: string;
@@ -104,17 +110,17 @@ export interface VapiCall {
     }>;
   };
 }
-async function fetchAllCallsScheduler(): Promise<VapiCall[]> {
-  const publicKey = process.env.VAPI_PRIVATE_KEY;
+export async function fetchAllCallsScheduler(): Promise<VapiCall[]> {
+  const privateKey = process.env.VAPI_PRIVATE_KEY;
 
-  if (!publicKey) {
-    throw new Error("VAPI_PUBLIC_KEY not found in environment variables");
+  if (!privateKey) {
+    throw new Error("VAPI_PRIVATE_KEY not found in environment variables");
   }
 
   const response = await fetch("https://api.vapi.ai/call", {
     method: "GET",
     headers: {
-      Authorization: `Bearer ${publicKey}`,
+      Authorization: `Bearer ${privateKey}`,
       "Content-Type": "application/json",
     },
   });
@@ -130,51 +136,11 @@ async function fetchAllCallsScheduler(): Promise<VapiCall[]> {
   return calls;
 }
 
-// Schedule the job to run every 5 minutes
-// cron.schedule("*/10 * * * * *", async () => {
-//    console.log("Running every 10 seconds...");
-//   try {
-//     console.log("test-----")
-//     const calls = await fetchAllCallsScheduler();
-//     console.log("Fetched calls:", calls.length);
-
-//     for (const call of calls) {
-//       const existing = await prisma.conversation.findFirst({
-//         where: { callId: call.id },
-//       });
-//       console.log("call", call);
-//       if (!existing) {
-//         await prisma.conversation.create({
-//           data: {
-//             callId: call.id,
-//             phoneNumber: call.customer.number,
-//             duration: 0,
-//             status: call.status || "unknown",
-//             transcript: call.transcript || null,
-//             recordingUrl: call.recordingUrl || null,
-//             messages: call.messages || [],
-//             contactId: "cme10aqz20008cry50z7v0zhg",
-//             summary:call.analysis.summary,
-//             phoneNumberId:call.phoneNumberId
-//           },
-//         });
-//         console.log(`Stored call ID: ${call.id}`);
-//       } else {
-//         console.log(`Call already exists: ${call.id}`);
-//       }
-//     }
-
-//     // You can do more processing here if needed
-//   } catch (error) {
-//     console.error("Error fetching calls:", error);
-//   }
-// });
-
 export async function fetchAllCalls(): Promise<VapiCall[]> {
   const publicKey = process.env.VAPI_PRIVATE_KEY;
 
   if (!publicKey) {
-    throw new Error("VAPI_PUBLIC_KEY not found in environment variables");
+    throw new Error("VAPI_PRIVATE_KEY not found in environment variables");
   }
 
   const response = await fetch("https://api.vapi.ai/call", {

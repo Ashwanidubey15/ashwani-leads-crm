@@ -1,17 +1,39 @@
 // src/app/api/conversations/route.ts
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+    if (!user) {
+      return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const take = Math.min(Number(searchParams.get('take') ?? '50'), 100);
+    const skip = Number(searchParams.get('skip') ?? '0');
+
     const conversations = await prisma.conversation.findMany({
-      orderBy: { createdAt: 'desc' }, // optional: sort newest first
-      include: {
-        contact: true, // include contact details if needed
+      where: {
+        contact: { userId: user.id },
       },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        contact: true,
+      },
+      take,
+      skip,
     });
 
     return NextResponse.json({
@@ -24,5 +46,7 @@ export async function GET() {
       { success: false, message: 'Failed to fetch conversations' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }

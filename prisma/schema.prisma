@@ -97,6 +97,7 @@ model Contact {
   phoneNumber   String
   email         String?
   company       String?
+  schedules     Schedule[]
   conversations Conversation[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -105,8 +106,8 @@ model Contact {
 model Conversation {
   callId       String?   @unique
   id          String   @id @default(cuid())
-  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  contactId   String
+  contact     Contact?  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId   String?
   phoneNumber String
   duration    Int?     // in seconds
   status      String   // "completed", "missed", "in-progress"
@@ -125,4 +126,12 @@ model Locations {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   assistants Assistant[]
+}
+model Schedule {
+  id          String    @id @default(cuid())
+  contact     Contact   @relation(fields: [contactId], references: [id])
+  contactId   String
+  scheduleDate DateTime
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

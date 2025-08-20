@@ -23,18 +23,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const locationId = searchParams.get('locationId') || undefined;
-
     // Get user's phone numbers
     const userNumbers = await prisma.userNumber.findMany({
-      where: {
-        userId: user.id,
-        ...(locationId ? { assistant: { locationId } } : {}),
-      },
-      include: {
-        assistant: true,
-      }
+      where: { userId: user.id },
     });
 
     if (userNumbers.length === 0) {
@@ -46,6 +37,7 @@ export async function GET(request: NextRequest) {
 
     // Filter calls to only include those made to/from user's phone numbers
     const userPhoneNumberIds = userNumbers.map(un => un.phoneNumberId);
+    console.log("userPhoneNumberIds",userPhoneNumberIds)
     const filteredCalls = allCalls.filter(call => 
       userPhoneNumberIds.includes(call.phoneNumberId)
     );

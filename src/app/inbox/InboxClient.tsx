@@ -11,23 +11,18 @@ export interface UserNumber {
 }
 
 interface VapiCall {
-    id: string;
-  assistantId: string;
+  id: string;
   phoneNumberId: string;
-  type: string;
   startedAt: string;
   endedAt: string;
   transcript: string;
   recordingUrl: string;
   summary: string;
-   createdAt: string;
+  createdAt: string;
   updatedAt: string;
   orgId: string;
   cost: number;
-  customer: {
-    number: string;
-    sipUri?: string;
-  };
+  phoneNumber: string;
   status: string;
   endedReason: string;
   messages: Array<{
@@ -39,44 +34,20 @@ interface VapiCall {
     secondsFromStart: number;
   }>;
   stereoRecordingUrl: string;
-  costBreakdown: {
-    stt: number;
-    llm: number;
-    tts: number;
-    vapi: number;
-    chat: number;
-    total: number;
-    llmPromptTokens: number;
-    llmCompletionTokens: number;
-    ttsCharacters: number;
-  };
+ 
   phoneCallProvider: string;
   phoneCallProviderId: string;
   phoneCallTransport: string;
   analysis: {
     summary: string;
-    successEvaluation: string;
   };
-  artifact: {
-    recordingUrl: string;
-    stereoRecordingUrl: string;
-    transcript: string;
-    messages: Array<{
-      role: string;
-      time: number;
-      message: string;
-      endTime?: number;
-      duration?: number;
-      secondsFromStart: number;
-    }>;
-  };
-   contact?: {
+
+  contact?: {
     id: string;
     name: string;
     email?: string;
     company?: string;
   };
-  
 }
 
 interface InboxClientProps {
@@ -84,9 +55,13 @@ interface InboxClientProps {
   locationId?: string;
 }
 
-export default function InboxClient({ userNumbers, locationId }: InboxClientProps) {
+export default function InboxClient({
+  userNumbers,
+  locationId,
+}: InboxClientProps) {
   const [calls, setCalls] = useState<VapiCall[]>([]);
-  const [selectedPhoneNumber, setSelectedPhoneNumber] = useState<UserNumber | null>(null);
+  const [selectedPhoneNumber, setSelectedPhoneNumber] =
+    useState<UserNumber | null>(null);
   const [selectedCall, setSelectedCall] = useState<VapiCall | null>(null);
   const [showCalls, setShowCalls] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
@@ -100,11 +75,13 @@ export default function InboxClient({ userNumbers, locationId }: InboxClientProp
   const fetchVapiCalls = async () => {
     try {
       setLoading(true);
-      const qs = locationId ? `?locationId=${encodeURIComponent(locationId)}` : "";
-      const response = await fetch(`/api/vapi-calls${qs}`);
+      const qs = locationId
+        ? `?locationId=${encodeURIComponent(locationId)}`
+        : "";
+      const response = await fetch(`/api/conversations${qs}`);
       if (response.ok) {
         const data = await response.json();
-        setCalls(data.calls || []);
+        setCalls(data.data || []);
       } else {
         const errorData = await response.json();
         setError(errorData.error || "Failed to fetch calls");
@@ -305,7 +282,7 @@ export default function InboxClient({ userNumbers, locationId }: InboxClientProp
                               <div className="flex-1 min-w-0">
                                 <h3 className="text-lg font-semibold text-gray-900 truncate">
                                   {phoneCalls.length > 0
-                                    ? phoneCalls[0].customer?.number || 
+                                    ? phoneCalls[0].phoneNumber ||
                                       "Unknown Caller"
                                     : phoneNumber.number}
                                 </h3>
@@ -316,8 +293,9 @@ export default function InboxClient({ userNumbers, locationId }: InboxClientProp
                                 <p className="text-xs text-purple-600 mt-1 font-medium">
                                   {phoneCalls.length} calls
                                 </p>
-                                     <h5 className="text-lg font-semibold text-gray-900 truncate">{phoneNumber.number}</h5>
-
+                                <h5 className="text-lg font-semibold text-gray-900 truncate">
+                                  {phoneNumber.number}
+                                </h5>
                               </div>
                             </div>
                           </div>
@@ -353,7 +331,7 @@ export default function InboxClient({ userNumbers, locationId }: InboxClientProp
                     </div>
                     <div>
                       <h2 className="text-xl font-semibold text-gray-900">
-                        {selectedCall?.customer?.number || "Unknown Caller"}
+                        {selectedCall?.phoneNumber || "Unknown Caller"}
                       </h2>
                       <p className="text-sm text-gray-600">
                         {selectedPhoneNumber.label}
@@ -372,8 +350,8 @@ export default function InboxClient({ userNumbers, locationId }: InboxClientProp
                       onClick={() => setShowSummary(true)}
                       className="px-5 py-3 rounded-2xl text-base font-medium bg-purple-500 text-white hover:bg-purple-600 transition"
                     >
-                      Show Summary                    
-                      </button>
+                      Show Summary
+                    </button>
                   </div>
                 </div>
                 <div className="px-6 py-6">
@@ -447,7 +425,7 @@ export default function InboxClient({ userNumbers, locationId }: InboxClientProp
                                     </span>
                                   </div>
                                   <div className="text-sm text-gray-600">
-                                    {call.customer.number}
+                                    {call.phoneNumber}
                                   </div>
                                   {call.contact && (
                                     <div className="text-xs text-purple-600 mt-1 font-medium">
@@ -556,14 +534,14 @@ export default function InboxClient({ userNumbers, locationId }: InboxClientProp
                                     </button>
 
                                     {/* Summary Content */}
-                                    {selectedCall.analysis?.summary && (
+                                    {selectedCall.summary && (
                                       <div>
                                         <h4 className="text-lg font-medium text-gray-900 mb-4">
                                           Summary
                                         </h4>
                                         <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
                                           <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                                            {selectedCall.analysis.summary}
+                                            {selectedCall.summary}
                                           </p>
                                         </div>
                                       </div>
