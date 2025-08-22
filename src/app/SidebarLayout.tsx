@@ -63,9 +63,9 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
   const onLocationsPath = pathname.startsWith("/locations");
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <aside
-        className={`relative bg-gradient-to-b from-purple-900 via-purple-800 to-purple-900 border-r border-purple-700 flex flex-col justify-between py-8 shadow-2xl transition-all duration-300 ${
+        className={`sticky top-0 h-screen overflow-y-auto bg-gradient-to-b from-purple-900 via-purple-800 to-purple-900 border-r border-purple-700 flex flex-col justify-between py-8 shadow-2xl transition-all duration-300 ${
           isCollapsed ? "w-24 px-4" : "w-72 px-6"
         }`}
       >
@@ -324,6 +324,66 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
               </div>
               {!isCollapsed && <span>Phone Numbers</span>}
             </Link>
+
+            <Link
+              href={`/twilio-numbers`}
+              className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
+                isActive("/twilio-numbers")
+                  ? "bg-white text-purple-900 shadow-lg transform scale-105"
+                  : "text-purple-100 hover:bg-purple-700 hover:text-white"
+              } ${isCollapsed ? "justify-center" : ""}`}
+            >
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  isActive("/twilio-numbers") ? "bg-purple-100" : "bg-purple-700"
+                }`}
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2 8.5A6.5 6.5 0 018.5 2h7A6.5 6.5 0 0122 8.5v7A6.5 6.5 0 0115.5 22h-7A6.5 6.5 0 012 15.5v-7zM7 9h10M7 13h7"
+                  />
+                </svg>
+              </div>
+              {!isCollapsed && <span>Twilio Numbers</span>}
+            </Link>
+
+            <Link
+              href={`/contact-us`}
+              className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
+                isActive("/contact-us")
+                  ? "bg-white text-purple-900 shadow-lg transform scale-105"
+                  : "text-purple-100 hover:bg-purple-700 hover:text-white"
+              } ${isCollapsed ? "justify-center" : ""}`}
+            >
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  isActive("/contact-us") ? "bg-purple-100" : "bg-purple-700"
+                }`}
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0zm6 1a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              {!isCollapsed && <span>Contact Us</span>}
+            </Link>
           </nav>
         </div>
 
@@ -376,7 +436,7 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
           </button>
         </div>
       </aside>
-      <main className="flex-1 bg-gray-50">{children}</main>
+      <main className="flex-1 bg-gray-50 overflow-y-auto h-screen">{children}</main>
     </div>
   );
 }

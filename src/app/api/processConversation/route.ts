@@ -1,20 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { processConversation } from "@/lib/chatgptContactHandler";
+import { processConversation } from "@/lib/processConversation";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { callId, userId } = body;
-
+    const { callId, userId } = await req.json();
     if (!callId || !userId) {
-      return NextResponse.json({ error: "callId and userId are required" }, { status: 400 });
+      return NextResponse.json({ error: "callId and userId required" }, { status: 400 });
     }
 
-    const result = await processConversation(callId, userId);
-    return NextResponse.json(result, { status: 200 });
-
+    await processConversation(callId, userId);
+    return NextResponse.json({ success: true });
   } catch (err: any) {
-    console.error(err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

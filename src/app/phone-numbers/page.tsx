@@ -38,9 +38,31 @@ export default function PhoneNumbersPage() {
   const [suggestedAreaCodes, setSuggestedAreaCodes] = useState<string[]>([]);
   const [selectedNumber, setSelectedNumber] = useState<UserNumber | null>(null);
   const [showPurchaseForm, setShowPurchaseForm] = useState(false);
-  const [areaCode, setAreaCode] = useState("555");
+  // const [areaCode, setAreaCode] = useState("555");
   const [label, setLabel] = useState("Business Line");
   const [selectedAssistantId, setSelectedAssistantId] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [purchasingNumber, setPurchasingNumber] = useState<string | null>(null);
+  const [buyModalOpen, setBuyModalOpen] = useState(false);
+  const [buyStep, setBuyStep] = useState<1 | 2 | 3>(1);
+  const [selectedPhoneNumberToBuy, setSelectedPhoneNumberToBuy] = useState<string | null>(null);
+  const [endUserType, setEndUserType] = useState<"business" | "individual" | "">("");
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [addressesLoading, setAddressesLoading] = useState(false);
+  const [selectedAddressSid, setSelectedAddressSid] = useState("");
+  const [showCreateAddress, setShowCreateAddress] = useState(false);
+  const [newAddress, setNewAddress] = useState({
+    country: "AU",
+    customerName: "",
+    friendlyName: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    zipCode: "",
+  });
+  const [creatingAddress, setCreatingAddress] = useState(false);
 
   // Auto-dismiss messages after 5 seconds
   useEffect(() => {
@@ -86,10 +108,10 @@ export default function PhoneNumbersPage() {
 
   // Purchase a number directly from Vapi
   async function handlePurchase() {
-    if (!areaCode.trim()) {
-      setError("Please enter an area code");
-      return;
-    }
+    // if (!areaCode.trim()) {
+    //   setError("Please enter an area code");
+    //   return;
+    // }
 
     if (!label.trim()) {
       setError("Please enter a label for your phone number");
@@ -111,7 +133,7 @@ export default function PhoneNumbersPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          areaCode: areaCode.trim(),
+          // areaCode: areaCode.trim(),
           label: label.trim(), 
           purpose: "inbound",
           assistantId: selectedAssistantId
@@ -130,7 +152,7 @@ export default function PhoneNumbersPage() {
       }
 
       setSuccess("Phone number purchased successfully!");
-      setAreaCode("555");
+      // setAreaCode("555");
       setLabel("Business Line");
       setSelectedAssistantId("");
       setShowPurchaseForm(false);
@@ -139,6 +161,110 @@ export default function PhoneNumbersPage() {
       setError(error.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleSearchNumbers() {
+    try {
+      setSearching(true);
+      setError("");
+      setSuccess("");
+      const res = await fetch(`/api/twilio/search-numbers?country=AU&type=mobile&limit=20`);
+      if (!res.ok) {
+        throw new Error("Failed to search numbers");
+      }
+      const data = await res.json();
+      setSearchResults(Array.isArray(data) ? data : []);
+      if (Array.isArray(data) && data.length === 0) {
+        setSuccess("No numbers found right now. Try again later.");
+      }
+    } catch (error: any) {
+      setError(error.message || "Failed to search numbers");
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  async function handleBuyNumber(phoneNumber: string) {
+    // Open the modal regardless; we will require assistant before final purchase
+    setSelectedPhoneNumberToBuy(phoneNumber);
+    setBuyStep(1);
+    setEndUserType("");
+    setSelectedAddressSid("");
+    setShowCreateAddress(false);
+    setBuyModalOpen(true);
+  }
+
+  async function loadAddresses() {
+    try {
+      setAddressesLoading(true);
+      const res = await fetch("/api/twilio/addresses");
+      if (!res.ok) throw new Error("Failed to load addresses");
+      const list = await res.json();
+      const arr = Array.isArray(list) ? list : [];
+      setAddresses(arr);
+      if (!selectedAddressSid && arr.length > 0) {
+        setSelectedAddressSid(arr[0].sid);
+      }
+    } catch (e: any) {
+      setError(e.message || "Failed to load addresses");
+    } finally {
+      setAddressesLoading(false);
+    }
+  }
+
+  async function handleCreateAddress(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      setCreatingAddress(true);
+      const res = await fetch("/api/twilio/addresses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newAddress),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || "Failed to create address");
+      }
+      const created = await res.json();
+      setAddresses([created, ...addresses]);
+      setSelectedAddressSid(created.sid);
+      setShowCreateAddress(false);
+    } catch (e: any) {
+      setError(e.message || "Failed to create address");
+    } finally {
+      setCreatingAddress(false);
+    }
+  }
+
+  async function finalizePurchase() {
+    if (!selectedPhoneNumberToBuy) return;
+    try {
+      setPurchasingNumber(selectedPhoneNumberToBuy);
+      const res = await fetch("/api/twilio/purchase-number", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoneNumber: selectedPhoneNumberToBuy,
+          addressSid: selectedAddressSid || undefined,
+          label: label.trim() || "Business Line",
+          assistantId: selectedAssistantId,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || "Failed to purchase number");
+      }
+      setSuccess("Phone number purchased successfully!");
+      setBuyModalOpen(false);
+      setShowPurchaseForm(false);
+      setSearchResults([]);
+      setSelectedAssistantId("");
+      await fetchUserNumbers();
+    } catch (e: any) {
+      setError(e.message || "Failed to purchase number");
+    } finally {
+      setPurchasingNumber(null);
     }
   }
 
@@ -222,7 +348,7 @@ export default function PhoneNumbersPage() {
                   </svg>
                 </button>
                 <p className="text-red-800 pr-10 font-medium">{error}</p>
-                {suggestedAreaCodes.length > 0 && (
+                {/* {suggestedAreaCodes.length > 0 && (
                   <div className="mt-3">
                     <p className="text-sm text-red-700 mb-2 font-medium">Try one of these available area codes:</p>
                     <div className="flex gap-2 flex-wrap">
@@ -237,7 +363,7 @@ export default function PhoneNumbersPage() {
                       ))}
                     </div>
                   </div>
-                )}
+                )} */}
               </div>
             )}
             {success && (
@@ -280,23 +406,34 @@ export default function PhoneNumbersPage() {
             </div>
             <div className="max-w-2xl">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {/* Country (fixed) */}
                 <div>
-                  <label htmlFor="areaCode" className="block text-sm font-medium text-gray-700 mb-2">
-                    Area Code
+                  <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
+                    Country
                   </label>
                   <input
-                    type="text"
-                    id="areaCode"
-                    value={areaCode}
-                    onChange={(e) => setAreaCode(e.target.value)}
-                    placeholder="e.g., 555, 212, 415"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                    maxLength={3}
+                    id="country"
+                    value="Australia (AU)"
+                    disabled
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-100 text-gray-700"
                   />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Enter a 3-digit US area code
-                  </p>
+                  <p className="text-xs text-gray-500 mt-2">Only Australian numbers are supported.</p>
                 </div>
+                {/* Type (fixed) */}
+                <div>
+                  <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
+                    Type
+                  </label>
+                  <input
+                    id="type"
+                    value="Mobile"
+                    disabled
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-100 text-gray-700"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">Searching for mobile numbers.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                   <label htmlFor="label" className="block text-sm font-medium text-gray-700 mb-2">
                     Label
@@ -313,8 +450,6 @@ export default function PhoneNumbersPage() {
                     Give your phone number a descriptive name
                   </p>
                 </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                   <label htmlFor="assistant" className="block text-sm font-medium text-gray-700 mb-2">
                     Assign to Assistant
@@ -337,18 +472,216 @@ export default function PhoneNumbersPage() {
                   </p>
                 </div>
               </div>
-              <div className="text-center">
+              <div className="flex items-center gap-4 mb-2">
                 <button
+                  onClick={handleSearchNumbers}
+                  disabled={searching}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+                >
+                  {searching ? "Searching..." : "Search"}
+                </button>
+                {searchResults.length > 0 && (
+                  <span className="text-sm text-gray-600">{searchResults.length} suggestion{searchResults.length > 1 ? 's' : ''} found</span>
+                )}
+              </div>
+              {searchResults.length > 0 && (
+                <div className="mt-4 divide-y divide-gray-200 border border-gray-200 rounded-2xl overflow-hidden">
+                  {searchResults.map((item: any, idx: number) => (
+                    <div key={item.phoneNumber} className="flex items-center justify-between px-4 py-4 bg-white hover:bg-gray-50">
+                      <div className="flex items-start gap-4">
+                        <div className="text-base sm:text-lg font-mono text-gray-900 font-semibold">{item.phoneNumber}</div>
+                        <div className="text-xs sm:text-sm text-gray-600">
+                          <div>{item.locality ? `${item.locality}, ` : ""}{item.region ? `${item.region} AU` : "Australia"}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <span className="hidden sm:inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">Mobile</span>
+                        <div className="text-sm text-gray-900 font-semibold">$3.00</div>
+                        <button
+                          onClick={() => handleBuyNumber(item.phoneNumber)}
+                          disabled={!!purchasingNumber}
+                          className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-medium hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow"
+                        >
+                          {purchasingNumber === item.phoneNumber ? "Buying..." : "Buy"}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="text-center mt-6">
+                {/* <button
                   onClick={handlePurchase}
-                  disabled={loading || !areaCode.trim() || !label.trim() || !selectedAssistantId}
+                  // disabled={loading || !areaCode.trim() || !label.trim() || !selectedAssistantId}
                   className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-8 py-4 rounded-xl hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium transition-all duration-200 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
                 >
                   {loading ? "Purchasing..." : "Purchase Phone Number"}
-                </button>
+                </button> */}
                 <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
                   {/* <p className="text-sm text-gray-700 font-medium">
                     💰 Cost: $1.99/month • Includes voice and SMS capabilities
                   </p> */}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Buy Flow Modal */}
+        {buyModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setBuyModalOpen(false)}></div>
+            <div className="relative bg-white w-full max-w-2xl mx-4 rounded-3xl shadow-2xl ring-1 ring-black/5 transform transition-all duration-300">
+              {/* Header */}
+              <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-purple-600 to-indigo-600 rounded-t-3xl">
+                <h3 className="text-lg font-semibold text-white">
+                  {buyStep === 1 && "Review Phone Number"}
+                  {buyStep === 2 && "Select End-User"}
+                  {buyStep === 3 && "Assign Address"}
+                </h3>
+                <button onClick={() => setBuyModalOpen(false)} className="text-white/90 hover:text-white">✕</button>
+              </div>
+              {/* Body */}
+              <div className="px-6 py-6">
+                {buyStep === 1 && (
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-2xl font-extrabold tracking-tight text-gray-900">{selectedPhoneNumberToBuy}</div>
+                      <div className="text-gray-900 font-semibold text-lg">$3.00 <span className="text-gray-500 font-normal">monthly fee</span></div>
+                    </div>
+                    <div className="mt-4 text-sm text-gray-700 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-2xl p-4">
+                      You'll be charged $3.00 immediately. Afterwards, you'll be charged $3.00/month in addition to usage.
+                    </div>
+                    <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-sm">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-2">Capabilities</h4>
+                        <ul className="text-sm text-gray-700 space-y-1">
+                          <li className="flex items-center gap-2"><span className="w-2 h-2 bg-purple-500 rounded-full"></span> Voice: Receive incoming calls and make outgoing calls.</li>
+                          <li className="flex items-center gap-2"><span className="w-2 h-2 bg-purple-500 rounded-full"></span> Fax: Send and receive faxes.</li>
+                        </ul>
+                      </div>
+                      <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-sm">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-2">Global Routing</h4>
+                        <div className="text-sm text-gray-700">
+                          Voice and Messaging will be routed to the United States (US1) Region. You can re-route after purchase.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {buyStep === 2 && (
+                  <div>
+                    <p className="text-sm text-gray-800 mb-4">Who will use {selectedPhoneNumberToBuy}?</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <label className="flex items-start gap-3 p-4 border rounded-2xl cursor-pointer hover:bg-gray-50 shadow-sm">
+                        <input type="radio" name="enduser" className="mt-1" checked={endUserType === 'business'} onChange={() => setEndUserType('business')} />
+                        <div>
+                          <div className="font-semibold text-gray-900">Business</div>
+                          <div className="text-sm text-gray-600">A business will make or receive a call with this phone number.</div>
+                        </div>
+                      </label>
+                      <label className="flex items-start gap-3 p-4 border rounded-2xl cursor-pointer hover:bg-gray-50 shadow-sm">
+                        <input type="radio" name="enduser" className="mt-1" checked={endUserType === 'individual'} onChange={() => setEndUserType('individual')} />
+                        <div>
+                          <div className="font-semibold text-gray-900">Individual</div>
+                          <div className="text-sm text-gray-600">An individual will make or receive a call with this phone number.</div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                )}
+                {buyStep === 3 && (
+                  <div>
+                    <p className="text-sm text-gray-800 mb-4">Assign Address for {selectedPhoneNumberToBuy}</p>
+                    <div className="mb-3 flex items-center justify-between">
+                      <div className="text-sm text-gray-600">Select an existing address or create a new one.</div>
+                      <button onClick={() => setShowCreateAddress(!showCreateAddress)} className="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                        {showCreateAddress ? 'Use existing' : 'Create an Address'}
+                      </button>
+                    </div>
+                    {!showCreateAddress && (
+                      <div>
+                        {addressesLoading && <div className="p-4 text-sm text-gray-600">Loading addresses...</div>}
+                        {!addressesLoading && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Select Address</label>
+                              <select
+                                value={selectedAddressSid}
+                                onChange={(e) => setSelectedAddressSid(e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                              >
+                                {addresses.map((addr) => (
+                                  <option key={addr.sid} value={addr.sid}>
+                                    {(addr.friendlyName || addr.customerName)} — {addr.city}, {addr.region}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            {selectedAddressSid && (
+                              <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                {addresses.filter(a => a.sid === selectedAddressSid).map(addr => (
+                                  <div key={addr.sid} className="text-sm text-gray-800 space-y-1">
+                                    <div className="font-medium">{addr.friendlyName || addr.customerName}</div>
+                                    <div>{addr.street}{addr.streetSecondary ? `, ${addr.streetSecondary}` : ''}</div>
+                                    <div>{addr.city}, {addr.region} {addr.postalCode}</div>
+                                    <div>{addr.isoCountry}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {!addressesLoading && addresses.length === 0 && (
+                          <div className="p-4 text-sm text-gray-600">No addresses found. Create a new address.</div>
+                        )}
+                      </div>
+                    )}
+                    {showCreateAddress && (
+                      <form onSubmit={handleCreateAddress} className="space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <input value={newAddress.customerName} onChange={(e)=>setNewAddress({...newAddress, customerName: e.target.value})} placeholder="Customer Name" className="px-3 py-2 border rounded-lg" required />
+                          <input value={newAddress.friendlyName} onChange={(e)=>setNewAddress({...newAddress, friendlyName: e.target.value})} placeholder="Friendly Name" className="px-3 py-2 border rounded-lg" required />
+                          <input value={newAddress.addressLine1} onChange={(e)=>setNewAddress({...newAddress, addressLine1: e.target.value})} placeholder="Address Line 1" className="px-3 py-2 border rounded-lg sm:col-span-2" required />
+                          <input value={newAddress.addressLine2} onChange={(e)=>setNewAddress({...newAddress, addressLine2: e.target.value})} placeholder="Address Line 2 (optional)" className="px-3 py-2 border rounded-lg sm:col-span-2" />
+                          <input value={newAddress.city} onChange={(e)=>setNewAddress({...newAddress, city: e.target.value})} placeholder="City" className="px-3 py-2 border rounded-lg" required />
+                          <input value={newAddress.state} onChange={(e)=>setNewAddress({...newAddress, state: e.target.value})} placeholder="State/Region" className="px-3 py-2 border rounded-lg" required />
+                          <input value={newAddress.zipCode} onChange={(e)=>setNewAddress({...newAddress, zipCode: e.target.value})} placeholder="Postal Code" className="px-3 py-2 border rounded-lg" required />
+                          <input value={newAddress.country} disabled className="px-3 py-2 border rounded-lg" />
+                        </div>
+                        <div className="flex items-center gap-3 pt-1">
+                          <button type="submit" disabled={creatingAddress} className="px-4 py-2 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-50">
+                            {creatingAddress ? 'Creating...' : 'Create Address'}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                )}
+              </div>
+              {/* Footer */}
+              <div className="px-6 py-5 border-t border-gray-100 flex items-center justify-between bg-gray-50 rounded-b-3xl">
+                <button onClick={() => {
+                  if (buyStep === 1) { setBuyModalOpen(false); }
+                  if (buyStep === 2) { setBuyStep(1); }
+                  if (buyStep === 3) { setBuyStep(2); }
+                }} className="px-4 py-2 rounded-xl border text-gray-700 hover:bg-white">{buyStep === 1 ? 'Cancel' : 'Back'}</button>
+                <div className="flex items-center gap-3">
+                  {buyStep < 3 && (
+                    <button onClick={async () => {
+                      if (buyStep === 1) { setBuyStep(2); }
+                      else if (buyStep === 2) { if (!endUserType) return; await loadAddresses(); setBuyStep(3); }
+                    }}
+                      disabled={buyStep === 2 && !endUserType}
+                      className="px-5 py-2 rounded-xl bg-purple-600 text-white font-medium hover:bg-purple-700 disabled:opacity-50 shadow">
+                      Next
+                    </button>
+                  )}
+                  {buyStep === 3 && (
+                    <button onClick={finalizePurchase} disabled={!selectedAssistantId || !selectedAddressSid || !!purchasingNumber} className="px-5 py-2 rounded-xl bg-purple-600 text-white font-medium hover:bg-purple-700 disabled:opacity-50 shadow">
+                      {purchasingNumber ? 'Buying...' : `Buy ${selectedPhoneNumberToBuy || ''}`}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

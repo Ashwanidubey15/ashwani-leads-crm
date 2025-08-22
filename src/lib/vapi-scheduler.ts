@@ -1,6 +1,7 @@
 // import { PrismaClient } from "@prisma/client";
 // import cron from "node-cron";
 // import { fetchAllCallsScheduler } from "./vapi";
+// import { processConversation } from "./processConversation"; // ✅ Import GPT processor
 
 // const prisma = new PrismaClient();
 
@@ -13,13 +14,13 @@
 //     console.log("Running every 10 seconds...");
 //     try {
 //       const calls = await fetchAllCallsScheduler();
-//       console.log("Fetched calls:", calls.length);
 
 //       for (const call of calls) {
 //         try {
 //           const existing = await prisma.conversation.findFirst({
 //             where: { callId: call.id },
 //           });
+
 //           const durationSeconds = (() => {
 //             try {
 //               if (call.startedAt && call.endedAt) {
@@ -41,16 +42,13 @@
 //           const messages = Array.isArray(call.messages) ? call.messages : call.artifact?.messages ?? [];
 //           const summary = call.analysis?.summary ?? null;
 
+//           const userNumber = await prisma.userNumber.findFirst({
+//             where: { phoneNumberId: call.phoneNumberId },
+//           });
 //           if (!existing) {
-//             const userNumber = await prisma.userNumber.findFirst({
-//               where: { phoneNumberId: call.phoneNumberId },
-//             });
 
 //             if (!userNumber) {
-//               console.warn(
-//                 `No matching user number found for phoneNumberId=${call.phoneNumberId}. Skipping call ${call.id}.`
-//               );
-//               continue;
+//               continue; // Skip if no user found
 //             }
 
 //             let contact = await prisma.contact.findFirst({
@@ -70,7 +68,8 @@
 //               });
 //             }
 
-//             await prisma.conversation.create({
+//             const newConversation = await prisma.conversation.create({
+              
 //               data: {
 //                 callId: call.id,
 //                 phoneNumber: call.customer.number,
@@ -84,8 +83,10 @@
 //                 phoneNumberId: call.phoneNumberId,
 //               },
 //             });
+//             console.log("👉 newConversation:", newConversation);
 
-//             console.log(`Stored call ID: ${call.id}`);
+            
+
 //           } else {
 //             await prisma.conversation.update({
 //               where: { id: existing.id },
@@ -99,7 +100,10 @@
 //                 phoneNumberId: call.phoneNumberId ?? existing.phoneNumberId,
 //               },
 //             });
-//             console.log(`Updated call: ${call.id}`);
+//             // ✅ Now run GPT extraction
+//             if(userNumber) {
+//               await processConversation(call.id, userNumber.userId);
+//             }
 //           }
 //         } catch (innerError) {
 //           console.error(`Error processing call ${call.id}:`, innerError);
@@ -114,6 +118,7 @@
 import { PrismaClient } from "@prisma/client";
 import cron from "node-cron";
 import { fetchAllCallsScheduler } from "./vapi";
+import { processConversation } from "./processConversation";
 
 const prisma = new PrismaClient();
 
@@ -123,20 +128,15 @@ declare global {
 
 if (!global.__vapiCronStarted) {
   cron.schedule("*/10 * * * * *", async () => {
-    console.log("🕒 Running every 10 seconds...");
-
+    console.log("Running every 10 seconds...");
     try {
       const calls = await fetchAllCallsScheduler();
-      // console.log(`📥 Fetched ${calls.length} calls from Vapi`);
 
       for (const call of calls) {
         try {
-          // console.log(`\n🔹 Processing call ID: ${call.id}`);
-
           const existing = await prisma.conversation.findFirst({
             where: { callId: call.id },
           });
-          // console.log(existing ? `✏️ Existing conversation found (ID: ${existing.id})` : "✅ No existing conversation, will create new");
 
           const durationSeconds = (() => {
             try {
@@ -153,49 +153,36 @@ if (!global.__vapiCronStarted) {
               return 0;
             }
           })();
-          // console.log(`⏱ Duration calculated: ${durationSeconds} seconds`);
 
           const transcript = call.transcript ?? call.artifact?.transcript ?? null;
           const recordingUrl = call.recordingUrl ?? call.artifact?.recordingUrl ?? null;
           const messages = Array.isArray(call.messages) ? call.messages : call.artifact?.messages ?? [];
           const summary = call.analysis?.summary ?? null;
-          // console.log(`📝 Transcript length: ${transcript?.length ?? 0}`);
-          // console.log(`🎙 Recording URL: ${recordingUrl}`);
-          // console.log(`💬 Messages count: ${messages.length}`);
-          // console.log(`🗂 Summary: ${summary ?? "None"}`);
 
-          if (!existing) {
-            const userNumber = await prisma.userNumber.findFirst({
-              where: { phoneNumberId: call.phoneNumberId },
-            });
+          const userNumber = await prisma.userNumber.findFirst({
+            where: { phoneNumberId: call.phoneNumberId },
+          });
+          if (!userNumber) continue;
 
-            if (!userNumber) {
-              // console.warn(`⚠️ No matching user number for phoneNumberId=${call.phoneNumberId}. Skipping call ${call.id}.`);
-              continue;
-            }
-            // console.log(`👤 Found userNumber ID: ${userNumber.id}, User ID: ${userNumber.userId}`);
+          let contact = await prisma.contact.findFirst({
+            where: {
+              phoneNumber: call.customer.number,
+              userId: userNumber.userId,
+            },
+          });
 
-            let contact = await prisma.contact.findFirst({
-              where: {
+          if (!contact) {
+            contact = await prisma.contact.create({
+              data: {
                 phoneNumber: call.customer.number,
+                name: "Unknown",
                 userId: userNumber.userId,
               },
             });
+          }
 
-            if (!contact) {
-              contact = await prisma.contact.create({
-                data: {
-                  phoneNumber: call.customer.number,
-                  name: "Unknown",
-                  userId: userNumber.userId,
-                },
-              });
-              // console.log(`➕ Created new contact ID: ${contact.id}`);
-            } else {
-              // console.log(`✏️ Existing contact ID: ${contact.id}`);
-            }
-
-            await prisma.conversation.create({
+          if (!existing) {
+            const newConversation = await prisma.conversation.create({
               data: {
                 callId: call.id,
                 phoneNumber: call.customer.number,
@@ -209,8 +196,11 @@ if (!global.__vapiCronStarted) {
                 phoneNumberId: call.phoneNumberId,
               },
             });
+            console.log("👉 newConversation:", newConversation);
 
-            // console.log(`✅ Stored call ID: ${call.id}`);
+            // ✅ Run GPT extraction for new conversation
+            await processConversation(call.id, userNumber.userId);
+
           } else {
             await prisma.conversation.update({
               where: { id: existing.id },
@@ -224,16 +214,18 @@ if (!global.__vapiCronStarted) {
                 phoneNumberId: call.phoneNumberId ?? existing.phoneNumberId,
               },
             });
-            // console.log(`🔄 Updated call ID: ${call.id}`);
+
+            // ✅ Optionally run GPT extraction on update
+            await processConversation(call.id, userNumber.userId);
           }
         } catch (innerError) {
-          // console.error(`❌ Error processing call ${call.id}:`, innerError);
+          console.error(`Error processing call ${call.id}:`, innerError);
         }
       }
     } catch (error) {
-      // console.error("❌ Error fetching calls:", error);
+      console.error("Error fetching calls:", error);
     }
   });
+
   global.__vapiCronStarted = true;
-  // console.log("✅ VAPI cron job started");
 }
