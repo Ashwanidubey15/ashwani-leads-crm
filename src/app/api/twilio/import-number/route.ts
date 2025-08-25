@@ -12,9 +12,6 @@ const twilioClient = Twilio(
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("🚀 Starting POST /import-number");
-
-    // 🔹 Auth check
     const session = await getServerSession(authOptions);
     console.log("🧑 Session:", session);
     if (!session?.user?.email) {
@@ -22,18 +19,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 🔹 Get user
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
     });
-    console.log("👤 User found:", user);
+
     if (!user)
       return NextResponse.json({ error: "User not found" }, { status: 404 });
-
-    // 🔹
-    //
-    //
-    //  Parse request body
 
     const {
       phoneNumber,
@@ -43,7 +34,6 @@ export async function POST(request: NextRequest) {
       assistantId,
     } = await request.json();
 
-    // Use SID from request if present, otherwise fallback to env
     const twilioSid = requestTwilioSid || process.env.TWILIO_ACCOUNT_SID;
     console.log("📩 Request body:", {
       phoneNumber,
@@ -68,7 +58,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 🔹 Verify assistant
     const assistant = await prisma.assistant.findFirst({
       where: { id: assistantId, userId: user.id },
     });
@@ -81,7 +70,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 🔹 Validate Twilio number
     let incomingNumber;
     if (requestTwilioSid) {
       console.log("Fetching Twilio number by Phone SID:", requestTwilioSid);
@@ -97,7 +85,6 @@ export async function POST(request: NextRequest) {
       incomingNumber = list[0];
     }
 
-    // 🔹 Import into Vapi
     const vapiKey = process.env.VAPI_PRIVATE_KEY;
     if (!vapiKey) {
       console.error("VAPI_PRIVATE_KEY not configured");
@@ -109,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     console.log("📞 Importing into Vapi:", {
       number: incomingNumber.phoneNumber,
-      twilioAccountSid: incomingNumber.accountSid, // Use the SID returned by Twilio
+      twilioAccountSid: incomingNumber.accountSid,
       assistantId: assistant.vapiAssistantId,
       label,
     });
@@ -122,9 +109,9 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         provider: "twilio",
-        number: incomingNumber.phoneNumber, // E.164 format
-        twilioAccountSid: incomingNumber.accountSid, // SID from Twilio
-        twilioAuthToken: process.env.TWILIO_AUTH_TOKEN, // Auth token from env
+        number: incomingNumber.phoneNumber,
+        twilioAccountSid: incomingNumber.accountSid,
+        twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
         name: label || "Business Line",
         assistantId: assistant.vapiAssistantId,
       }),
@@ -138,16 +125,8 @@ export async function POST(request: NextRequest) {
         { status: importRes.status }
       );
     }
-    console.log("Sending to Vapi:", {
-      provider: "twilio",
-      twilioAccountSid: incomingNumber.accountSid,
-      number: incomingNumber.phoneNumber,
-      name: label || "Business Line",
-      assistantId: assistant.vapiAssistantId,
-    });
 
     const vapiNumber = await importRes.json();
-    console.log("✅ Vapi number created:", vapiNumber);
 
     const vapiPhoneNumberId = vapiNumber?.id;
     if (!vapiPhoneNumberId) {
@@ -158,7 +137,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 🔹 Save into DB
     console.log("💾 Saving number to database...");
     let saved = await prisma.userNumber.findFirst({
       where: { userId: user.id, number: phoneNumber },

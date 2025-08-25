@@ -80,6 +80,8 @@ export async function processConversation(callId: string, userId: string) {
 		messages: messagesForGPT,
 		temperature: 0,
 	});
+	console.log("gptResponse",gptResponse);
+	
 
 	const messageContent = gptResponse.choices?.[0]?.message?.content ?? "";
 	if (!messageContent || typeof messageContent !== "string") {

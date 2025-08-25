@@ -214,7 +214,7 @@ if (!global.__vapiCronStarted) {
                 phoneNumberId: call.phoneNumberId ?? existing.phoneNumberId,
               },
             });
-
+console.log('dfsdf')
             // ✅ Optionally run GPT extraction on update
             await processConversation(call.id, userNumber.userId);
           }

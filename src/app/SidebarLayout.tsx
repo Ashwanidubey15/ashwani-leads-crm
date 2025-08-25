@@ -326,16 +326,16 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
             </Link>
 
             <Link
-              href={`/twilio-numbers`}
+              href={`/addresses?locationId=${selectedLocation}`}
               className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
-                isActive("/twilio-numbers")
+                isActive("/addresses")
                   ? "bg-white text-purple-900 shadow-lg transform scale-105"
                   : "text-purple-100 hover:bg-purple-700 hover:text-white"
               } ${isCollapsed ? "justify-center" : ""}`}
             >
               <div
                 className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                  isActive("/twilio-numbers") ? "bg-purple-100" : "bg-purple-700"
+                  isActive("/addresses") ? "bg-purple-100" : "bg-purple-700"
                 }`}
               >
                 <svg
@@ -348,11 +348,11 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M2 8.5A6.5 6.5 0 018.5 2h7A6.5 6.5 0 0122 8.5v7A6.5 6.5 0 0115.5 22h-7A6.5 6.5 0 012 15.5v-7zM7 9h10M7 13h7"
+                    d="M3 7h18M5 11h14M7 15h10M9 19h6"
                   />
                 </svg>
               </div>
-              {!isCollapsed && <span>Twilio Numbers</span>}
+              {!isCollapsed && <span>Addresses</span>}
             </Link>
 
             <Link
