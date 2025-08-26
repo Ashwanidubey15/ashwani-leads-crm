@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Button from "../components/Button";
-import Loader from "../components/loader";
+import Button from "../../components/Button";
+import Loader from "../../components/loader";
 
 interface UserNumber {
   id: string;
@@ -261,13 +261,17 @@ export default function PhoneNumbersPage() {
     if (!selectedPhoneNumberToBuy) return;
     try {
       setPurchasingNumber(selectedPhoneNumberToBuy);
-      console.log({
+      console.log(
+        {
           phoneNumber: selectedPhoneNumberToBuy,
           addressSid: selectedAddressSid || undefined,
           label: label.trim() || "Business Line",
           assistantId: selectedAssistantId,
-        }, "----------ddd------",label.trim());
-      
+        },
+        "----------ddd------",
+        label.trim()
+      );
+
       const res = await fetch("/api/twilio/purchase-number", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -802,7 +806,7 @@ export default function PhoneNumbersPage() {
                                     key={addr.sid}
                                     className="text-sm text-gray-800 space-y-1"
                                   >
-                                    <div className="font-medium">
+                                    <div className="text-lg font-semibold text-purple-700">
                                       {addr.friendlyName || addr.customerName}
                                     </div>
                                     <div>
@@ -838,17 +842,17 @@ export default function PhoneNumbersPage() {
                       )}
                     </div>
                     <div className="my-3 flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
-                    If you don’t have one, create it on the Addresses page.
-                  </div>
-                  <Link
-                    href={`/addresses?locationId=${locationIdFromUrl}`}
-                    target="_blank"
-                    className="text-sm px-4 py-2 border rounded-xl text-white bg-purple-600 hover:bg-purple-700 font-medium"
-                  >
-                    Create Address
-                  </Link>
-                </div>
+                      <div className="text-sm text-gray-600">
+                        If you don’t have one, create it on the Addresses page.
+                      </div>
+                      <Link
+                        href={`/addresses?locationId=${locationIdFromUrl}`}
+                        target="_blank"
+                        className="text-sm px-4 py-2 border rounded-xl text-white bg-purple-600 hover:bg-purple-700 font-medium"
+                      >
+                        Create Address
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>

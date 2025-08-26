@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
+import Button from "@/components/Button";
+import Loader from "@/components/loader";
 
 interface Assistant {
   id: string;
@@ -21,9 +23,10 @@ interface Assistant {
 export default function AssistantsPage() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
-  const locationIdFromUrl = (searchParams?.get("locationId") ?? "");
+  const locationIdFromUrl = searchParams?.get("locationId") ?? "";
   const [assistants, setAssistants] = useState<Assistant[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingGenPrompt, setLoadingGenPrompt] = useState(false);
   const [error, setError] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedAssistant, setSelectedAssistant] = useState<Assistant | null>(
@@ -42,6 +45,16 @@ export default function AssistantsPage() {
     locationId: "",
   });
   const [locations, setLocations] = useState<any[]>([]);
+  const [isAIGenerateMode, setIsAIGenerateMode] = useState(false);
+  const [aiAssistantType, setAiAssistantType] = useState(
+    "Customer Service & Support"
+  );
+  const [aiIndustry, setAiIndustry] = useState("IT");
+  const [aiSpecificRole, setAiSpecificRole] = useState("Lead Qualification");
+  const [aiSpecificTasks, setAiSpecificTasks] = useState(
+    "e.g., Handle refunds, Schedule demos"
+  );
+  const [aiWhatShouldAssistantDo, setAiWhatShouldAssistantDo] = useState("");
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -55,7 +68,10 @@ export default function AssistantsPage() {
         setLocations(list);
 
         if (locationIdFromUrl) {
-          setNewAssistant((prev) => ({ ...prev, locationId: locationIdFromUrl }));
+          setNewAssistant((prev) => ({
+            ...prev,
+            locationId: locationIdFromUrl,
+          }));
         } else if (list.length > 0 && !newAssistant.locationId) {
           setNewAssistant((prev) => {
             return { ...prev, locationId: list[0].id };
@@ -179,6 +195,7 @@ export default function AssistantsPage() {
         firstMessage: "",
         locationId: locationIdFromUrl || "",
       });
+      setAiWhatShouldAssistantDo("");
 
       setShowCreateForm(false);
     } catch (error: any) {
@@ -211,6 +228,41 @@ export default function AssistantsPage() {
       setError(error.message);
     }
   }
+
+  const handleGeneratePropmt = async () => {
+    try {
+      setLoadingGenPrompt(true);
+      const promptContent = `You are an AI Assistant Generator.
+            The user wants to create an AI assistant named "${newAssistant.name}".
+            The assistant type is "${aiAssistantType}" in the "${aiIndustry}" industry.
+            Its specific role is "${aiSpecificRole}" and its specific tasks include "${aiSpecificTasks}".
+            What should this assistant do? "${aiWhatShouldAssistantDo}".
+            Generate a detailed description and instructions for this AI assistant based on the provided information.`;
+
+      const res = await fetch("/api/ai-generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          aiPromptMessage: [{ role: "system", content: promptContent }],
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(
+          errorData.message || "Failed to generate AI prompt via API."
+        );
+      }
+
+      const generatedPrompt = await res.json();
+      setNewAssistant((prev) => ({ ...prev, description: generatedPrompt }));
+    } catch (error) {
+      console.error("Error generating prompt:", error);
+      setError("Failed to generate AI prompt.");
+    } finally {
+      setLoadingGenPrompt(false);
+    }
+  };
 
   useEffect(() => {
     if (session) {
@@ -298,49 +350,233 @@ export default function AssistantsPage() {
                 Create New Assistant
               </h2>
             </div>
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Assistant Name
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    value={newAssistant.name}
-                    onChange={(e) =>
-                      setNewAssistant({ ...newAssistant, name: e.target.value })
-                    }
-                    placeholder="e.g., Customer Support, Sales Assistant"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+            {/* Start of new code for AI/Manual Input buttons and AI Generator */}
+            <div className="flex space-x-4 mb-6">
+              <Button
+                onClick={() => setIsAIGenerateMode(false)}
+                size="lg"
+                variant={isAIGenerateMode ? "outline" : "default"}
+              >
+                Manual Input
+              </Button>
+              <Button
+                onClick={() => setIsAIGenerateMode(true)}
+                size="lg"
+                variant={!isAIGenerateMode ? "outline" : "default"}
+              >
+                <svg
+                  className="w-5 h-5 inline-block mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2-2m-2 2l-2-2m7 7H14M12 17l-2 2m2-2l2 2m-2-2v0m0 0h.01"
                   />
-                </div>
-                <div>
-                  <label
-                    htmlFor="firstMessage"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    First Message (Greeting)
-                  </label>
-                  <input
-                    type="text"
-                    id="firstMessage"
-                    value={newAssistant.firstMessage}
-                    onChange={(e) =>
-                      setNewAssistant({
-                        ...newAssistant,
-                        firstMessage: e.target.value,
-                      })
-                    }
-                    placeholder="e.g., Hello! I'm your AI assistant. How can I help you today?"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                  />
-                </div>
+                </svg>
+                AI Generate
+              </Button>
+            </div>
+
+            {/* End of new code for AI/Manual Input buttons and AI Generator */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Assistant Name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  value={newAssistant.name}
+                  onChange={(e) =>
+                    setNewAssistant({ ...newAssistant, name: e.target.value })
+                  }
+                  placeholder="e.g., Customer Support, Sales Assistant"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                />
               </div>
               <div>
+                <label
+                  htmlFor="firstMessage"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  First Message (Greeting)
+                </label>
+                <input
+                  type="text"
+                  id="firstMessage"
+                  value={newAssistant.firstMessage}
+                  onChange={(e) =>
+                    setNewAssistant({
+                      ...newAssistant,
+                      firstMessage: e.target.value,
+                    })
+                  }
+                  placeholder="e.g., Hello! I'm your AI assistant. How can I help you today?"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                />
+              </div>
+            </div>
+            {isAIGenerateMode && (
+              <div className="mt-4 bg-purple-50 border border-purple-200 rounded-xl p-6 mb-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <svg
+                    className="w-6 h-6 text-purple-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11H5m14 0a2 2 0 012 2v2a2 2 0 01-2 2h-5m-9 0a2 2 0 01-2-2v-2a2 2 0 012-2m7 0V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6m7 0v-5a2 2 0 012-2h2a2 2 0 012 2v5M8 19h8a2 2 0 002-2V7a2 2 0 00-2-2H8a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <h3 className="text-lg font-semibold text-purple-800">
+                    AI Assistant Generator
+                  </h3>
+                  <span className="text-sm text-gray-500">
+                    Powered by OpenAI
+                  </span>
+                </div>
+                <p className="text-sm text-gray-700 mb-4">
+                  Note: Please enter the Assistant Name above before generating
+                  AI content. The AI will use that name in the generated prompt.
+                  <br />
+                  Current Assistant:{" "}
+                  <span className="font-semibold">
+                    {newAssistant.name || "N/A"}
+                  </span>
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label
+                      htmlFor="aiAssistantType"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Assistant Type *
+                    </label>
+                    <select
+                      id="aiAssistantType"
+                      value={aiAssistantType}
+                      onChange={(e) => setAiAssistantType(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                    >
+                      <option>Customer Service & Support</option>
+                      <option>Sales Executive</option>
+                      <option>Technical Support</option>
+                      <option>Virtual Assistant</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="aiIndustry"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Industry (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      id="aiIndustry"
+                      value={aiIndustry}
+                      onChange={(e) => setAiIndustry(e.target.value)}
+                      placeholder="e.g., IT, Healthcare, Finance"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                    />
+                  </div>
+                </div>
+                <div className="mb-6">
+                  <label
+                    htmlFor="aiWhatShouldAssistantDo"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    What should this assistant do? *
+                  </label>
+                  <textarea
+                    id="aiWhatShouldAssistantDo"
+                    value={aiWhatShouldAssistantDo}
+                    onChange={(e) => setAiWhatShouldAssistantDo(e.target.value)}
+                    rows={5}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors resize-none"
+                  ></textarea>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label
+                      htmlFor="aiSpecificRole"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Specific Role (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      id="aiSpecificRole"
+                      value={aiSpecificRole}
+                      onChange={(e) => setAiSpecificRole(e.target.value)}
+                      placeholder="e.g., Lead Qualification, Appointment Setting"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="aiSpecificTasks"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Specific Tasks (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      id="aiSpecificTasks"
+                      value={aiSpecificTasks}
+                      onChange={(e) => setAiSpecificTasks(e.target.value)}
+                      placeholder="e.g., Handle refunds, Schedule demos"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                    />
+                  </div>
+                </div>
+                <div className="text-center">
+                  <Button
+                    onClick={handleGeneratePropmt}
+                    disabled={
+                      loadingGenPrompt ||
+                      !newAssistant.name.trim() ||
+                      !aiWhatShouldAssistantDo.trim()
+                    }
+                    size="lg"
+                  >
+                    {" "}
+                    {loadingGenPrompt ? (
+                      <Loader size="sm" />
+                    ) : (
+                      <svg
+                        className="w-5 h-5 inline-block mr-2"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 11H5m14 0a2 2 0 012 2v2a2 2 0 01-2 2h-5m-9 0a2 2 0 01-2-2v-2a2 2 0 012-2m7 0V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6m7 0v-5a2 2 0 012-2h2a2 2 0 012 2v5M8 19h8a2 2 0 002-2V7a2 2 0 00-2-2H8a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
+                      </svg>
+                    )}
+                    Generate AI Prompt
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {(!isAIGenerateMode || newAssistant.description.length > 0) && (
+              <div className="mt-4">
                 <label
                   htmlFor="description"
                   className="block text-sm font-medium text-gray-700 mb-2"
@@ -365,19 +601,19 @@ export default function AssistantsPage() {
                   Be detailed about its role, knowledge, and behavior.
                 </p>
               </div>
-              <div className="text-center">
-                <button
-                  onClick={handleCreateAssistant}
-                  disabled={
-                    loading ||
-                    !newAssistant.name.trim() ||
-                    !newAssistant.description.trim()
-                  }
-                  className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-8 py-4 rounded-xl hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium transition-all duration-200 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
-                >
-                  {loading ? "Creating..." : "Create Assistant"}
-                </button>
-              </div>
+            )}
+            <div className="text-center">
+              <Button
+                onClick={handleCreateAssistant}
+                disabled={
+                  loading ||
+                  !newAssistant.name.trim() ||
+                  !newAssistant.description.trim()
+                }
+                size="lg"
+              >
+                {loading ? "Creating..." : "Create Assistant"}
+              </Button>
             </div>
           </div>
         )}

@@ -12,7 +12,6 @@ const client = Twilio(
 
 export async function POST(request: NextRequest) {
   const baseUrl = request.headers.get("origin");
-  console.log(baseUrl, "check --", request);
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
