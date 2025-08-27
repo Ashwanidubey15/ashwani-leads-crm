@@ -63,6 +63,7 @@ if (!global.__vapiCronStarted) {
           let contact = await prisma.contact.findFirst({
             where: {
               phoneNumber: call.customer.number,
+              assistantId: userNumber.assistantId, // must provide
               userId: userNumber.userId,
             },
           });
@@ -72,7 +73,8 @@ if (!global.__vapiCronStarted) {
               data: {
                 phoneNumber: call.customer.number,
                 name: "",
-                userId: userNumber.userId
+                userId: userNumber.userId,
+                assistantId: userNumber.assistantId,
               },
             });
           }
@@ -94,12 +96,13 @@ if (!global.__vapiCronStarted) {
             });
             console.log("👉 newConversation:", newConversation);
 
-            // ✅ Run GPT extraction for new conversation
+            //  Run GPT extraction for new conversation
             await processConversation(
               call.id,
-              userNumber.userId
+              userNumber.userId,
+              userNumber.assistantId
             );
-          } else {
+          } else if (existing.status !== "ended" ) {
             await prisma.conversation.update({
               where: { id: existing.id },
               data: {
@@ -112,10 +115,11 @@ if (!global.__vapiCronStarted) {
                 phoneNumberId: call.phoneNumberId ?? existing.phoneNumberId,
               },
             });
-            // ✅ Optionally run GPT extraction on update
+            //  Optionally run GPT extraction on update
             await processConversation(
               call.id,
-              userNumber.userId
+              userNumber.userId,
+              userNumber.assistantId
             );
           }
         } catch (innerError) {

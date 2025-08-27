@@ -3,7 +3,11 @@ import * as chrono from "chrono-node";
 import { aiPromptProcess } from "./aiProcess";
 const prisma = new PrismaClient();
 
-export async function processConversation(callId: string, userId: string) {
+export async function processConversation(
+  callId: string,
+  userId: string,
+  assistantId: string
+) {
   const conversation = await prisma.conversation.findUnique({
     where: { callId },
     include: { contact: true },
@@ -31,11 +35,18 @@ export async function processConversation(callId: string, userId: string) {
       { role: "user", content: conversation.transcript },
     ]);
     const extracted = JSON.parse(respones);
+
     const customerNumber = conversation.phoneNumber;
 
     // Upsert contact
     await prisma.contact.upsert({
-      where: { phoneNumber: customerNumber },
+      where: {
+        phoneNumber_assistantId: {
+          // 👈 composite unique input
+          phoneNumber: customerNumber,
+          assistantId: assistantId,
+        },
+      },
       update: {
         name: extracted.name ?? conversation.contact?.name ?? "",
         email: extracted.email ?? conversation.contact?.email ?? null,
@@ -44,6 +55,7 @@ export async function processConversation(callId: string, userId: string) {
       create: {
         phoneNumber: customerNumber,
         userId,
+        assistantId,
         name: extracted.name ?? "",
         email: extracted.email ?? null,
         company: extracted.company ?? null,

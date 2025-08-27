@@ -86,6 +86,7 @@ model Assistant {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   locationId       String
+  contacts         Contact[]
   location         Locations @relation(fields: [locationId], references: [id], onDelete: Cascade)
 }
 
@@ -93,14 +94,17 @@ model Contact {
   id            String        @id @default(cuid())
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String
+  assistant     Assistant     @relation(fields: [assistantId], references: [id], onDelete: Cascade)
+  assistantId   String
   name          String
-  phoneNumber   String        @unique
+  phoneNumber   String
   email         String?
   company       String?
   schedules     Schedule[]
   conversations Conversation[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  @@unique([phoneNumber, assistantId]) 
 }
 
 model Conversation {
