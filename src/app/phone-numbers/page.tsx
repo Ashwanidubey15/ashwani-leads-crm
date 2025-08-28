@@ -30,10 +30,14 @@ interface Assistant {
 }
 
 export default function PhoneNumbersPage() {
+  const [showInput, setShowInput] = useState(false);
+  const [loadingCall, setLoadingCall] = useState(false);
+  const [customerNumber, setCustomerNumber] = useState("");
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const locationIdFromUrl = searchParams?.get("locationId") ?? "";
   const [userNumbers, setUserNumbers] = useState<UserNumber[]>([]);
+  const [assistantId, setAssistantId] = useState("");
   const [assistants, setAssistants] = useState<Assistant[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -261,16 +265,6 @@ export default function PhoneNumbersPage() {
     if (!selectedPhoneNumberToBuy) return;
     try {
       setPurchasingNumber(selectedPhoneNumberToBuy);
-      console.log(
-        {
-          phoneNumber: selectedPhoneNumberToBuy,
-          addressSid: selectedAddressSid || undefined,
-          label: label.trim() || "Business Line",
-          assistantId: selectedAssistantId,
-        },
-        "----------ddd------",
-        label.trim()
-      );
 
       const res = await fetch("/api/twilio/purchase-number", {
         method: "POST",
@@ -321,7 +315,25 @@ export default function PhoneNumbersPage() {
       setError(error.message);
     }
   }
+  const handleCall = async () => {
+    if (!customerNumber || !assistantId) return;
 
+    setLoading(true);
+    try {
+      await fetch("/api/call-customer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerNumber,
+          assistantId,
+        }),
+      });
+    } catch (err) {
+      console.error("Call failed:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
   // Dismiss messages manually
   const dismissMessage = () => {
     setError("");
@@ -453,13 +465,68 @@ export default function PhoneNumbersPage() {
         )}
 
         {/* Purchase Button */}
-        <div className="mb-6">
-          <button
-            onClick={() => setShowPurchaseForm(!showPurchaseForm)}
-            className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-purple-800 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
-          >
-            {showPurchaseForm ? "Cancel" : "Purchase New Number"}
-          </button>
+        <div className="p-6">
+          {/* Purchase button */}
+          <div className="mb-6">
+            <button
+              onClick={() => setShowPurchaseForm(!showPurchaseForm)}
+              className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-purple-800 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+            >
+              {showPurchaseForm ? "Cancel" : "Purchase New Number"}
+            </button>
+            <div className="p-6 border rounded-xl bg-white shadow-sm">
+              {/* Step 1: Only show Test Call button */}
+              {!showInput && (
+                <button
+                  onClick={() => setShowInput(true)}
+                  className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-purple-800 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+                >
+                  Test Call
+                </button>
+              )}
+
+              {/* Step 2: Dropdown + Input + Call button */}
+              {showInput && (
+                <div className="mt-4 space-y-4">
+                  {/* Assistant dropdown */}
+                  <select
+                    value={assistantId}
+                    onChange={(e) => setAssistantId(e.target.value)}
+                    className="border px-4 py-2 rounded-lg w-full"
+                  >
+                    <option value="">Select Assistant</option>
+                    {assistants.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Customer number input */}
+                  <input
+                    type="text"
+                    placeholder="Enter customer number e.g. +911111111111"
+                    value={customerNumber}
+                    onChange={(e) => setCustomerNumber(e.target.value)}
+                    className="border px-4 py-2 rounded-lg w-full"
+                  />
+
+                  {/* Call button */}
+                  <div className="p-4 flex justify-end">
+                    <button
+                      onClick={handleCall}
+                      disabled={loading || !assistantId || !customerNumber}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
+                    >
+                      {loading ? "Calling..." : "Call Customer"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Call button */}
         </div>
 
         {/* Purchase Form */}

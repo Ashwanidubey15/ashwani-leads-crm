@@ -92,9 +92,10 @@ if (!global.__vapiCronStarted) {
                 contactId: contact.id,
                 summary,
                 phoneNumberId: call.phoneNumberId,
+                type:call.type
               },
             });
-            console.log("👉 newConversation:", newConversation);
+            console.log(" newConversation added:");
 
             //  Run GPT extraction for new conversation
             await processConversation(
