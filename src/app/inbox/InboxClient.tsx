@@ -14,6 +14,7 @@ export interface UserNumber {
 }
 
 interface VapiCall {
+  type: string;
   id: string;
   phoneNumberId: string;
   startedAt: string;
@@ -135,6 +136,19 @@ export default function InboxClient({
         return "bg-gray-100 text-gray-800";
     }
   };
+  function getCallTypeLabel(type: string) {
+    if (type.toLowerCase().includes("outbound")) return "Outbound";
+    if (type.toLowerCase().includes("inbound")) return "Inbound";
+    return "Unknown";
+  }
+
+  function getCallTypeColor(type: string) {
+    if (type.toLowerCase().includes("outbound"))
+      return "bg-orange-100 text-orange-800";
+    if (type.toLowerCase().includes("inbound"))
+      return "bg-purple-100 text-purple-800";
+    return "bg-gray-100 text-gray-800";
+  }
 
   const getCallsForPhoneNumber = (phoneNumberId: string) => {
     return calls.filter((call) => call.phoneNumberId === phoneNumberId);
@@ -176,7 +190,7 @@ export default function InboxClient({
 
   return (
     <>
-      <CustomerDetailModal 
+      <CustomerDetailModal
         open={showDetail.open}
         contactId={showDetail.contactId}
         onClose={() =>
@@ -296,7 +310,7 @@ export default function InboxClient({
                                   <h3 className="text-lg font-semibold text-gray-900 truncate">
                                     {phoneCalls.length > 0
                                       ? phoneCalls[0]?.contact?.name ||
-                                       phoneCalls[0]?.phoneNumber
+                                        phoneCalls[0]?.phoneNumber
                                       : phoneNumber.number}
                                   </h3>
 
@@ -345,7 +359,8 @@ export default function InboxClient({
                         </div>
                         <div>
                           <h2 className="text-xl font-semibold text-gray-900">
-                            {selectedCall?.contact?.name || selectedCall?.phoneNumber}
+                            {selectedCall?.contact?.name ||
+                              selectedCall?.phoneNumber}
                           </h2>
                           <p className="text-sm text-gray-600">
                             {selectedPhoneNumber.label}
@@ -446,6 +461,14 @@ export default function InboxClient({
                                       >
                                         {call.status}
                                       </span>
+                                      <span
+                                        className={`px-2 py-1 text-xs rounded-full font-medium ${getCallTypeColor(
+                                          call.type
+                                        )}`}
+                                      >
+                                        {getCallTypeLabel(call.type)}
+                                      </span>
+
                                       <span className="text-xs text-gray-500">
                                         {formatDate(call.createdAt)}
                                       </span>

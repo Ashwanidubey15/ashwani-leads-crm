@@ -51,7 +51,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
     },
   });
 
-  await prisma.$disconnect();
+  // await prisma.$disconnect();
 
   // Map to the expected UserNumber[] shape used by InboxClient
   const mapped: UserNumber[] = userNumbers.map((n: any) => ({

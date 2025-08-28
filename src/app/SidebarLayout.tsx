@@ -296,7 +296,7 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
             </Link>
 
             {/* Schedule */}
-            {/* <Link
+            <Link
               href="/schedule"
               className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
                 isActive("/schedule")
@@ -324,7 +324,7 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
                 </svg>
               </div>
               {!isCollapsed && <span>Schedule</span>}
-            </Link> */}
+            </Link>
 
             <Link
               href={`/phone-numbers?locationId=${selectedLocation}`}

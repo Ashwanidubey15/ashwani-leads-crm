@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Button from "../../components/Button";
 import Loader from "../../components/loader";
+import PhoneField from "../../components/PhoneField";
 
 interface UserNumber {
   id: string;
@@ -184,7 +185,7 @@ export default function PhoneNumbersPage() {
       setError("");
       setSuccess("");
       const res = await fetch(
-        `/api/twilio/search-numbers?country=AU&type=local&limit=20`
+         `/api/twilio/search-numbers?country=AU&type=local&limit=20`
       );
       if (!res.ok) {
         throw new Error("Failed to search numbers");
@@ -465,69 +466,90 @@ export default function PhoneNumbersPage() {
         )}
 
         {/* Purchase Button */}
-        <div className="p-6">
-          {/* Purchase button */}
-          <div className="mb-6">
-            <button
-              onClick={() => setShowPurchaseForm(!showPurchaseForm)}
+        <div className="mb-6 flex justify-between items-center">
+          <Button
+            size="lg"
+            onClick={() => setShowPurchaseForm(!showPurchaseForm)}
+            className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-purple-800 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+          >
+            {showPurchaseForm ? "Cancel" : "Purchase New Number"}
+          </Button>
+
+          {!showInput && (
+            <Button
+              size="lg"
+              onClick={() => setShowInput(true)}
               className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-purple-800 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
             >
-              {showPurchaseForm ? "Cancel" : "Purchase New Number"}
-            </button>
-            <div className="p-6 border rounded-xl bg-white shadow-sm">
-              {/* Step 1: Only show Test Call button */}
-              {!showInput && (
-                <button
-                  onClick={() => setShowInput(true)}
-                  className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-purple-800 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
-                >
-                  Test Call
-                </button>
-              )}
+              Test Call
+            </Button>
+          )}
+        </div>
 
-              {/* Step 2: Dropdown + Input + Call button */}
-              {showInput && (
-                <div className="mt-4 space-y-4">
-                  {/* Assistant dropdown */}
+        {showInput && (
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
+            <div className="mt-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label
+                    htmlFor="customer number"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Customer number
+                  </label>
+                  <PhoneField
+                    id="customer number"
+                    label={undefined}
+                    value={customerNumber}
+                    onChange={(val) => setCustomerNumber(val)}
+                    placeholder="Enter phone number"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="assistantId"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Select Assistant
+                  </label>
                   <select
+                    id="assistantId"
                     value={assistantId}
                     onChange={(e) => setAssistantId(e.target.value)}
-                    className="border px-4 py-2 rounded-lg w-full"
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-colors
+                  border-gray-300 focus:ring-purple-500 focus:border-purple-500`}
                   >
-                    <option value="">Select Assistant</option>
-                    {assistants.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.name}
+                    <option value="">Select an assistant</option>
+                    {assistants.map((assistant) => (
+                      <option key={assistant.id} value={assistant.id}>
+                        {assistant.name}
                       </option>
                     ))}
                   </select>
-
-                  {/* Customer number input */}
-                  <input
-                    type="text"
-                    placeholder="Enter customer number e.g. +911111111111"
-                    value={customerNumber}
-                    onChange={(e) => setCustomerNumber(e.target.value)}
-                    className="border px-4 py-2 rounded-lg w-full"
-                  />
-
-                  {/* Call button */}
-                  <div className="p-4 flex justify-end">
-                    <button
-                      onClick={handleCall}
-                      disabled={loading || !assistantId || !customerNumber}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
-                    >
-                      {loading ? "Calling..." : "Call Customer"}
-                    </button>
-                  </div>
                 </div>
-              )}
+              </div>
+              {/* Call button */}
+              <div className="p-4 flex justify-between">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowInput(false);
+                    setCustomerNumber("");
+                    setAssistantId("");
+                  }}
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleCall}
+                  disabled={loading || !assistantId || !customerNumber}
+                >
+                  {loading ? "Calling..." : "Call Customer"}
+                </Button>
+              </div>
             </div>
           </div>
-
-          {/* Call button */}
-        </div>
+        )}
 
         {/* Purchase Form */}
         {showPurchaseForm && (
@@ -628,22 +650,22 @@ export default function PhoneNumbersPage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4 mb-2">
-              <Button
-                onClick={handleSearchNumbers}
-                disabled={searching}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
-              >
-                {searching && <Loader size="sm" />}
-                Search
-              </Button>
-              {searchResults.length > 0 && (
-                <span className="text-sm text-gray-600">
-                  {searchResults.length} suggestion
-                  {searchResults.length > 1 ? "s" : ""} found
-                </span>
-              )}
-            </div>
+              <div className="flex items-center gap-4 mb-2">
+                <Button
+                  onClick={handleSearchNumbers}
+                  disabled={searching}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+                >
+                  {searching && <Loader size="sm" />}
+                  Search
+                </Button>
+                {searchResults.length > 0 && (
+                  <span className="text-sm text-gray-600">
+                    {searchResults.length} suggestion
+                    {searchResults.length > 1 ? "s" : ""} found
+                  </span>
+                )}
+              </div>
             {searchResults.length > 0 && (
               <div className="mt-4 overflow-hidden rounded-2xl border border-gray-200">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -701,7 +723,7 @@ export default function PhoneNumbersPage() {
                 </table>
               </div>
             )}
-            {/* <div className="text-center mt-6">
+             {/* <div className="text-center mt-6">
                 <button
                   onClick={handlePurchase}
                   // disabled={loading || !areaCode.trim() || !label.trim() || !selectedAssistantId}

@@ -114,6 +114,7 @@ if (!global.__vapiCronStarted) {
                 messages,
                 summary,
                 phoneNumberId: call.phoneNumberId ?? existing.phoneNumberId,
+                type:call.type
               },
             });
             //  Optionally run GPT extraction on update

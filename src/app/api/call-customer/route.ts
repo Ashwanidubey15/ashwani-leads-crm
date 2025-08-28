@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 export async function POST(req: Request) {
   try {
-    console.log("chekc -=-===-=")
+    
     const { customerNumber, assistantId } = await req.json();
 
     if (!customerNumber) {
@@ -29,17 +29,6 @@ export async function POST(req: Request) {
         },
       },
     });
-    console.log(
-      assistantId,
-      "check ---",
-      JSON.stringify(outBoundAssistant, null, 2),
-      "--------------------------------",
-      {
-        assistantId: outBoundAssistant?.vapiAssistantId,
-        phoneNumberId: outBoundAssistant?.phoneNumbers[0].phoneNumberId,
-        customer: { number: customerNumber }, // e.g. "+15556667777"
-      }
-    );
 
     const res = await fetch("https://api.vapi.ai/call", {
       method: "POST",

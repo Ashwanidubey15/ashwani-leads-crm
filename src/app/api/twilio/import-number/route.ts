@@ -13,7 +13,7 @@ const twilioClient = Twilio(
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    console.log("🧑 Session:", session);
+    console.log(" Session:", session);
     if (!session?.user?.email) {
       console.warn("Unauthorized request");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     } = await request.json();
 
     const twilioSid = requestTwilioSid || process.env.TWILIO_ACCOUNT_SID;
-    console.log("📩 Request body:", {
+    console.log(" Request body:", {
       phoneNumber,
       twilioSid,
       label,
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     const assistant = await prisma.assistant.findFirst({
       where: { id: assistantId, userId: user.id },
     });
-    console.log("🛠 Assistant:", assistant);
+    console.log("Assistant:", assistant);
     if (!assistant?.vapiAssistantId) {
       console.warn("Assistant not configured with Vapi");
       return NextResponse.json(

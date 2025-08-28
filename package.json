@@ -23,6 +23,7 @@
     "openai": "^5.12.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-phone-number-input": "^3.4.12",
     "twilio": "^5.8.0"
   },
   "devDependencies": {
