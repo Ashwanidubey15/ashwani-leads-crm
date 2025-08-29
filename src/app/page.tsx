@@ -120,7 +120,7 @@ export default function Home() {
                 </svg>
               </div>
               <div>
-                <div className="text-xl font-bold text-gray-900">TrueLeads</div>
+                <div className="text-xl font-bold text-gray-900">Suhavi Leads</div>
                 <div className="text-xs text-purple-600 font-medium">CRM Platform</div>
               </div>
             </div>
