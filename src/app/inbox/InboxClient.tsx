@@ -13,6 +13,17 @@ export interface UserNumber {
   phoneNumberId: string;
 }
 
+interface Contact {
+  assistantId: string;
+  company: string;
+  conversations: VapiCall[];
+  email: string;
+  id: string;
+  name: string;
+  phoneNumber: string;
+  userId: string;
+}
+
 interface VapiCall {
   type: string;
   id: string;
@@ -46,26 +57,17 @@ interface VapiCall {
     summary: string;
   };
 
-  contact?: {
-    id: string;
-    name: string;
-    email?: string;
-    company?: string;
-  };
+  contactId?: string;
 }
 
 interface InboxClientProps {
-  userNumbers: UserNumber[];
   locationId?: string;
 }
 
-export default function InboxClient({
-  userNumbers,
-  locationId,
-}: InboxClientProps) {
-  const [calls, setCalls] = useState<VapiCall[]>([]);
+export default function InboxClient({ locationId }: InboxClientProps) {
+  const [calls, setCalls] = useState<Contact[]>([]);
   const [selectedPhoneNumber, setSelectedPhoneNumber] =
-    useState<UserNumber | null>(null);
+    useState<Contact | null>(null);
   const [selectedCall, setSelectedCall] = useState<VapiCall | null>(null);
   const [showCalls, setShowCalls] = useState(true);
   const [showDetail, setShowDetails] = useState({
@@ -82,7 +84,6 @@ export default function InboxClient({
 
   const fetchVapiCalls = async () => {
     try {
-      setLoading(true);
       const qs = locationId
         ? `?locationId=${encodeURIComponent(locationId)}`
         : "";
@@ -151,7 +152,11 @@ export default function InboxClient({
   }
 
   const getCallsForPhoneNumber = (phoneNumberId: string) => {
-    return calls.filter((call) => call.phoneNumberId === phoneNumberId);
+    return calls.flatMap((call) =>
+      call.id === phoneNumberId && call.conversations?.length > 0
+        ? call.conversations
+        : []
+    );
   };
 
   if (loading) {
@@ -237,7 +242,7 @@ export default function InboxClient({
                     Your Phone Numbers
                   </h2>
                 </div>
-                {userNumbers.length === 0 ? (
+                {calls.length === 0 ? (
                   <div className="px-6 py-12 text-center text-gray-500">
                     <div className="mb-4">
                       <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto">
@@ -265,10 +270,7 @@ export default function InboxClient({
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-100">
-                    {userNumbers.map((phoneNumber) => {
-                      const phoneCalls = getCallsForPhoneNumber(
-                        phoneNumber.phoneNumberId
-                      );
+                    {calls.map((phoneNumber) => {
                       return (
                         <div
                           key={phoneNumber.id}
@@ -278,10 +280,7 @@ export default function InboxClient({
                               : ""
                           }`}
                           onClick={() => {
-                            const phoneCalls = getCallsForPhoneNumber(
-                              phoneNumber.phoneNumberId
-                            );
-                            const firstCall = phoneCalls[0];
+                            const firstCall = phoneNumber.conversations?.[0];
                             setSelectedPhoneNumber(phoneNumber);
                             setSelectedCall(firstCall);
                           }}
@@ -307,21 +306,23 @@ export default function InboxClient({
                                   </div>
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <h3 className="text-lg font-semibold text-gray-900 truncate">
-                                    {phoneCalls.length > 0
-                                      ? phoneCalls[0]?.contact?.name ||
-                                        phoneCalls[0]?.phoneNumber
-                                      : phoneNumber.number}
-                                  </h3>
+                                  <div>
+                                    <h3 className="text-lg font-semibold text-gray-900">
+                                      {phoneNumber.name}
+                                    </h3>
+                                    <p className="text-sm text-gray-600">
+                                      {phoneNumber.phoneNumber}
+                                    </p>
+                                  </div>
 
-                                  <p className="text-sm text-gray-600 mt-1">
+                                  {/* <p className="text-sm text-gray-600 mt-1">
                                     {phoneNumber.label} • {phoneNumber.purpose}
-                                  </p>
+                                  </p> */}
                                   <p className="text-xs text-purple-600 mt-1 font-medium">
-                                    {phoneCalls.length} calls
+                                    {phoneNumber.conversations?.length} calls
                                   </p>
                                   <h5 className="text-lg font-semibold text-gray-900 truncate">
-                                    {phoneNumber.number}
+                                    {/* {phoneNumber.conversations[0].phoneNumber} */}
                                   </h5>
                                 </div>
                               </div>
@@ -359,12 +360,12 @@ export default function InboxClient({
                         </div>
                         <div>
                           <h2 className="text-xl font-semibold text-gray-900">
-                            {selectedCall?.contact?.name ||
-                              selectedCall?.phoneNumber}
+                            {selectedPhoneNumber?.name ||
+                              selectedPhoneNumber?.phoneNumber}
                           </h2>
-                          <p className="text-sm text-gray-600">
-                            {selectedPhoneNumber.label}
-                          </p>
+                          {/* <p className="text-sm text-gray-600">
+                            {selectedCall.label}
+                          </p> */}
                         </div>
                         <div className="bg-black-500 p-1 rounded-md w-fit">
                           <audio controls className="w-35">
@@ -383,11 +384,11 @@ export default function InboxClient({
                         </button>
                       </div>
                       <button
-                        disabled={!selectedCall?.contact?.id}
+                        disabled={!selectedCall?.contactId}
                         onClick={() =>
                           setShowDetails({
                             open: true,
-                            contactId: selectedCall?.contact?.id as string,
+                            contactId: selectedCall?.contactId as string,
                           })
                         }
                       >
@@ -398,7 +399,7 @@ export default function InboxClient({
                   <div className="px-6 py-6">
                     {(() => {
                       const phoneCalls = getCallsForPhoneNumber(
-                        selectedPhoneNumber.phoneNumberId
+                        selectedPhoneNumber.id
                       );
                       if (phoneCalls.length === 0) {
                         return (
@@ -473,14 +474,7 @@ export default function InboxClient({
                                         {formatDate(call.createdAt)}
                                       </span>
                                     </div>
-                                    <div className="text-sm text-gray-600">
-                                      {call.phoneNumber}
-                                    </div>
-                                    {call.contact && (
-                                      <div className="text-xs text-purple-600 mt-1 font-medium">
-                                        {call.contact.name}
-                                      </div>
-                                    )}
+
                                     {call.summary && (
                                       <div className="text-xs text-gray-500 mt-2 line-clamp-2">
                                         {call.summary.substring(0, 100)}...

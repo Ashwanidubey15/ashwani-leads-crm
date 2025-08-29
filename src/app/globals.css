@@ -28,3 +28,45 @@ body {
 a:hover, button:hover, .cursor-pointer {
   cursor: pointer;
 }
+/* globals.css */
+.fc-header-toolbar {
+  @apply bg-gradient-to-br from-slate-50 to-slate-200 p-4 border-b border-slate-200;
+}
+
+.fc-toolbar-title {
+  @apply text-2xl font-bold text-slate-800;
+}
+
+.fc-button-primary {
+  @apply bg-gradient-to-br from-blue-500 to-blue-700 border-0 rounded-lg px-4 py-2 font-semibold 
+         shadow-md transition-all duration-200 ease-in-out;
+}
+
+.fc-button-primary:hover {
+  @apply bg-gradient-to-br from-blue-600 to-blue-800 -translate-y-0.5 shadow-xl;
+}
+
+.fc-button-primary:not(:disabled):active {
+  @apply bg-gradient-to-br from-blue-700 to-blue-900 translate-y-0;
+}
+
+.fc-daygrid-day-header {
+  @apply bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600 font-semibold 
+         p-3 border border-slate-200;
+}
+
+.fc-daygrid-day:hover {
+  @apply bg-blue-500/5 transition-colors duration-200 ease-in-out;
+}
+
+.fc-day-today {
+  @apply bg-gradient-to-br from-blue-100 to-blue-200;
+}
+
+.fc-event {
+  @apply rounded-xl border-0 shadow-md transition-all duration-300 ease-in-out;
+}
+
+.fc-event:hover {
+  @apply scale-[1.02] shadow-xl;
+}

@@ -122,7 +122,7 @@ model Conversation {
   messages     Json?
   phoneNumberId String?
   summary       String?
-  type          String  @default("outboundPhoneCall")
+  type          String  @default("inboundPhoneCall")
 }
 
 model Locations {
