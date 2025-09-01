@@ -14,7 +14,7 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
   );
   const [selectedLocation, setSelectedLocation] = useState("");
   // Hide sidebar on landing, login, and signup pages
-  const hideSidebar = ["/", "/login", "/signup"].includes(pathname);
+  const hideSidebar = ["/", "/signup"].includes(pathname);
   useEffect(() => {
     const fetchLocations = async () => {
       try {
@@ -418,7 +418,7 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
             className={`w-full py-2 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
               isCollapsed ? "aspect-square" : ""
             }`}
-            onClick={() => signOut({ callbackUrl: "/login" })}
+            onClick={() => signOut({ callbackUrl: "/" })}
           >
             <svg
               className="w-4 h-4"

@@ -368,7 +368,11 @@ export default function InboxClient({ locationId }: InboxClientProps) {
                           </p> */}
                         </div>
                         <div className="bg-black-500 p-1 rounded-md w-fit">
-                          <audio controls className="w-35">
+                          <audio
+                            key={selectedCall?.recordingUrl}
+                            controls
+                            className="w-35"
+                          >
                             <source
                               src={selectedCall?.recordingUrl}
                               type="audio/mpeg"
@@ -376,6 +380,7 @@ export default function InboxClient({ locationId }: InboxClientProps) {
                             Your browser does not support the audio element.
                           </audio>
                         </div>
+
                         <button
                           onClick={() => setShowSummary(true)}
                           className="px-5 py-3 rounded-2xl text-base font-medium bg-purple-500 text-white hover:bg-purple-600 transition"

@@ -1,9 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
+
 export async function POST(req: Request) {
   try {
-    
-    const { customerNumber, assistantId } = await req.json();
+    const { customerNumber, assistantId, leadId } = await req.json();
 
     if (!customerNumber) {
       return Response.json(
@@ -13,23 +13,25 @@ export async function POST(req: Request) {
     }
 
     const outBoundAssistant = await prisma.assistant.findUnique({
-      where: {
-        id: assistantId,
-      },
+      where: { id: assistantId },
       select: {
         id: true,
         name: true,
         vapiAssistantId: true,
         phoneNumbers: {
-          select: {
-            id: true,
-            number: true,
-            phoneNumberId: true,
-          },
+          select: { id: true, number: true, phoneNumberId: true },
         },
       },
     });
 
+    if (!outBoundAssistant || !outBoundAssistant.phoneNumbers.length) {
+      return Response.json(
+        { error: "Assistant or phone number not found" },
+        { status: 404 }
+      );
+    }
+
+    // call Vapi API
     const res = await fetch("https://api.vapi.ai/call", {
       method: "POST",
       headers: {
@@ -39,7 +41,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         assistantId: outBoundAssistant?.vapiAssistantId,
         phoneNumberId: outBoundAssistant?.phoneNumbers[0].phoneNumberId,
-        customer: { number: customerNumber }, // e.g. "+15556667777"
+        customer: { number: customerNumber },
       }),
     });
 
@@ -51,7 +53,19 @@ export async function POST(req: Request) {
       );
     }
 
-    const data = "await res.json()";
+    const data = await res.json();
+    console.log("check ---", JSON.stringify(data, null, 2));
+    // 4. Mark as in progress
+    if (leadId) {
+      await prisma.lead.update({
+        where: { id: leadId },
+        data: {
+          callId: data.id,
+          status: "IN_PROGRESS",
+        },
+      });
+    }
+
     return Response.json(data, { status: 200 });
   } catch (err: any) {
     console.error("Unexpected error while creating call:", err);

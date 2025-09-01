@@ -92,7 +92,7 @@ if (!global.__vapiCronStarted) {
                 contactId: contact.id,
                 summary,
                 phoneNumberId: call.phoneNumberId,
-                type:call.type
+                type: call.type,
               },
             });
             console.log(" newConversation added:");
@@ -103,7 +103,7 @@ if (!global.__vapiCronStarted) {
               userNumber.userId,
               userNumber.assistantId
             );
-          } else if (existing.status !== "ended" ) {
+          } else if (existing.status !== "ended") {
             await prisma.conversation.update({
               where: { id: existing.id },
               data: {
@@ -114,15 +114,55 @@ if (!global.__vapiCronStarted) {
                 messages,
                 summary,
                 phoneNumberId: call.phoneNumberId ?? existing.phoneNumberId,
-                type:call.type
+                type: call.type,
               },
             });
+            console.log("check --12323", JSON.stringify(call, null, 2));
+
             //  Optionally run GPT extraction on update
             await processConversation(
               call.id,
               userNumber.userId,
               userNumber.assistantId
             );
+            if (call.status === "ended") {
+              try {
+                const lead = await prisma.lead.findUnique({
+                  where: { callId: call.id },
+                });
+
+                if (!lead) {
+                  console.log("Not found", call.id);
+                  return;
+                }
+
+                if (
+                  call.endedReason === "silence-timed-out" ||
+                  call.endedReason === "customer-did-not-answer"
+                ) {
+                  const nextDate = new Date();
+                  nextDate.setDate(nextDate.getDate() + 1);
+                  await prisma.lead.update({
+                    where: { callId: call.id },
+                    data: {
+                      status: "PENDING",
+                      callId: null,
+                      retries: { increment: 1 },
+                      nextCallAt: nextDate, // retry tomorrow
+                    },
+                  });
+                  console.log("Lead reset to PENDING (retry possible)");
+                } else {
+                  await prisma.lead.update({
+                    where: { callId: call.id },
+                    data: { status: "ENDED", callId: null },
+                  });
+                  console.log("Lead updated to ENDED");
+                }
+              } catch (err: any) {
+                console.log("Error updating lead:", err);
+              }
+            }
           }
         } catch (innerError) {
           console.error(`Error processing call ${call.id}:`, innerError);

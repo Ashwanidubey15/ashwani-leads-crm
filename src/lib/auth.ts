@@ -42,9 +42,9 @@ export const authOptions = {
   ],
   session: { strategy: "jwt" as const },
   pages: {
-    signIn: "/login",
-    signOut: "/login",
-    error: "/login",
+    signIn: "/",
+    signOut: "/",
+    error: "/",
   },
   secret: process.env.NEXTAUTH_SECRET,
 };

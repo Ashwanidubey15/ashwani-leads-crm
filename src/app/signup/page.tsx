@@ -29,7 +29,7 @@ export default function SignupPage() {
       setError(data.message || "Signup failed");
     } else {
       setSuccess("Account created successfully! Redirecting to login...");
-      setTimeout(() => router.push("/login"), 1500);
+      setTimeout(() => router.push("/"), 1500);
     }
     setLoading(false);
   }
@@ -156,7 +156,7 @@ export default function SignupPage() {
           <div className="mt-6 text-center">
             <div className="text-sm text-gray-600">
               Already have an account?{' '}
-              <Link href="/login" className="text-purple-600 hover:text-purple-700 font-medium">
+              <Link href="/" className="text-purple-600 hover:text-purple-700 font-medium">
                 Sign in
               </Link>
             </div>
