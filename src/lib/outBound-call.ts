@@ -6,15 +6,23 @@ declare global {
 }
 
 if (!global.__outboundCronStarted) {
-  cron.schedule("*/10 * * * * *", async () => {
-    console.log("🚀 Running outbound sequencer every 10s...");
-    try {
-      await startNextCall();
-      //  await startScheduleCall();
-    } catch (err) {
-      console.error("Error in outbound sequencer:", err);
+  cron.schedule(
+    "*/10 * 9-17 * * *", 
+    // └── every 10 seconds, hours 9 → 16 (which is 9:00:00 up to 16:59:59)
+    async () => {
+      console.log("🚀 Running outbound sequencer (Sydney 9am–5pm window)");
+      try {
+        await startNextCall();
+        // await startScheduleCall();
+      } catch (err) {
+        console.error("Error in outbound sequencer:", err);
+      }
+    },
+    {
+      timezone: "Australia/Sydney", 
+      // timezone: "Asia/Kolkata", // India timezone
     }
-  });
+  );
 
   global.__outboundCronStarted = true;
 }
