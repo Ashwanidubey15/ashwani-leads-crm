@@ -54,7 +54,6 @@ export async function POST(req: Request) {
     }
 
     const data = await res.json();
-    console.log("check ---", JSON.stringify(data, null, 2));
     // 4. Mark as in progress
     if (leadId) {
       await prisma.lead.update({

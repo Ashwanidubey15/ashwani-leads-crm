@@ -385,6 +385,35 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
               </div>
               {!isCollapsed && <span>Addresses</span>}
             </Link>
+             <Link
+              href={`/leads?locationId=${selectedLocation}`}
+              className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
+                isActive("/leads")
+                  ? "bg-white text-purple-900 shadow-lg transform scale-105"
+                  : "text-purple-100 hover:bg-purple-700 hover:text-white"
+              } ${isCollapsed ? "justify-center" : ""}`}
+            >
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  isActive("/leads") ? "bg-purple-100" : "bg-purple-700"
+                }`}
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+              </div>
+              {!isCollapsed && <span>Leads</span>}
+            </Link>
           </nav>
         </div>
 

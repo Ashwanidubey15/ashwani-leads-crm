@@ -107,9 +107,11 @@ export default function PhoneNumbersPage() {
   // Fetch user's assistants
   async function fetchAssistants() {
     try {
-      const qs = locationIdFromUrl
-        ? `?locationId=${encodeURIComponent(locationIdFromUrl)}`
-        : "";
+      let qs = "?hasNumber=false";
+
+      if (locationIdFromUrl) {
+        qs += `&locationId=${encodeURIComponent(locationIdFromUrl)}`;
+      }
       const res = await fetch(`/api/assistants${qs}`);
       if (!res.ok) {
         throw new Error("Failed to fetch assistants");

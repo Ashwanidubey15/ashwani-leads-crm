@@ -79,9 +79,9 @@ export async function processConversation(
               scheduleDate: parsedDate,
             },
           });
-          console.log(" New schedule created:", parsedDate);
+          console.log(" New schedule created:");
         } else {
-          console.log("ℹ Schedule already exists:", parsedDate);
+          console.log(" Schedule already exists:");
           await prisma.schedule.update({
             where: {
               id: existingSchedule.id,

@@ -117,7 +117,6 @@ if (!global.__vapiCronStarted) {
                 type: call.type,
               },
             });
-            console.log("check --12323", JSON.stringify(call, null, 2));
 
             //  Optionally run GPT extraction on update
             await processConversation(

@@ -26,12 +26,22 @@ export default async function handler(
 
   if (req.method === "GET") {
     try {
-      const { locationId } = req.query;
+      const { locationId, hasNumber } = req.query;
+
+      const where: any = {
+        userId: user.id,
+        ...(locationId ? { locationId: String(locationId) } : {}),
+      };
+
+      // Filter by whether assistant has phoneNumbers
+      if (hasNumber === "true") {
+        where.phoneNumbers = { some: {} }; // must have at least 1 number
+      } else if (hasNumber === "false") {
+        where.phoneNumbers = { none: {} }; // must have 0 numbers
+      }
+
       const assistants = await prisma.assistant.findMany({
-        where: {
-          userId: user.id,
-          ...(locationId ? { locationId: String(locationId) } : {}), // only apply if passed
-        },
+        where,
         include: {
           phoneNumbers: {
             select: {

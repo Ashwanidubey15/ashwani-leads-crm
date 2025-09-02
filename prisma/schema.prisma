@@ -24,6 +24,7 @@ model User {
   sessions       Session[]
   userNumbers    UserNumber[]
   assistants     Assistant[]
+  leads          Lead[]
   contacts       Contact[]
 }
 
@@ -88,6 +89,7 @@ model Assistant {
   locationId       String
   contacts         Contact[]
   location         Locations @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  leads      Lead[] 
 }
 
 model Contact {
@@ -140,13 +142,19 @@ model Schedule {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
+
 model Lead {
   id          String   @id @default(cuid())
   phoneNumber String
+  name        String
   callId      String?   @unique
   status      String    @default("PENDING") // values: PENDING | IN_PROGRESS | ENDED | FAILED
   retries     Int       @default(0)
   nextCallAt  DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  assistant   Assistant? @relation(fields: [assistantId], references: [id], onDelete: SetNull)
+  assistantId String?
 }
