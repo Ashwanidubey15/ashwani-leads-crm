@@ -47,7 +47,6 @@ export async function POST(req: Request) {
 
     if (!res.ok) {
       const errorText = await res.text();
-      console.log("errorText", errorText);
       const nextDate = new Date();
       nextDate.setDate(nextDate.getDate() + 1);
       await prisma.lead.update({

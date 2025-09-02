@@ -16,6 +16,7 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
   // Hide sidebar on landing, login, and signup pages
   const hideSidebar = ["/", "/signup"].includes(pathname);
   useEffect(() => {
+    if (!session) return;
     const fetchLocations = async () => {
       try {
         const res = await fetch("/api/locations");
@@ -54,7 +55,7 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
         );
       }
     };
-  }, []);
+  }, [session]);
 
   if (status === "loading") return null;
   if (!session || hideSidebar) return <>{children}</>;
@@ -113,7 +114,9 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
               </div>
               {!isCollapsed && (
                 <div>
-                  <div className="text-xl font-bold text-white">Suhavi Leads</div>
+                  <div className="text-xl font-bold text-white">
+                    Suhavi Leads
+                  </div>
                   <div className="text-xs text-purple-200 font-medium">
                     CRM Platform
                   </div>
@@ -124,87 +127,88 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
 
           {/* Navigation */}
           <nav className="flex flex-col gap-1">
-            <div
-              className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
-                onLocationsPath
-                  ? "bg-white text-purple-900 shadow-lg transform scale-105"
-                  : "text-purple-100 hover:bg-purple-700 hover:text-white"
-              } ${isCollapsed ? "justify-center" : ""}`}
-            >
+            {locations.length > 0 && (
               <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                  onLocationsPath ? "bg-purple-100" : "bg-purple-700"
-                }`}
+                className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
+                  onLocationsPath
+                    ? "bg-white text-purple-900 shadow-lg transform scale-105"
+                    : "text-purple-100 hover:bg-purple-700 hover:text-white"
+                } ${isCollapsed ? "justify-center" : ""}`}
               >
-                <svg
-                  className="w-6 h-6 text-white"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    onLocationsPath ? "bg-purple-100" : "bg-purple-700"
+                  }`}
                 >
-                  <title>Location</title>
-                  <path d="M12 21s-6.5-6.75-6.5-11A6.5 6.5 0 0112 3a6.5 6.5 0 016.5 6c0 4.25-6.5 11-6.5 11z" />
-                  <circle cx="12" cy="9" r="2.25" fill="currentColor" />
-                </svg>
-              </div>
-              {!isCollapsed && (
-                <div className="ml-auto w-full relative">
-                  <div className="relative">
-                    {/* Location icon on the left */}
-                    <div className="absolute inset-y-0 left-2 flex items-center pointer-events-none">
-                      <svg
-                        className="w-5 h-5 text-purple-700"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM12 11a2 2 0 100-4 2 2 0 000 4z" />
-                      </svg>
-                    </div>
+                  <svg
+                    className="w-6 h-6 text-white"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <title>Location</title>
+                    <path d="M12 21s-6.5-6.75-6.5-11A6.5 6.5 0 0112 3a6.5 6.5 0 016.5 6c0 4.25-6.5 11-6.5 11z" />
+                    <circle cx="12" cy="9" r="2.25" fill="currentColor" />
+                  </svg>
+                </div>
+                {!isCollapsed && (
+                  <div className="ml-auto w-full relative">
+                    <div className="relative">
+                      {/* Location icon on the left */}
+                      <div className="absolute inset-y-0 left-2 flex items-center pointer-events-none">
+                        <svg
+                          className="w-5 h-5 text-purple-700"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM12 11a2 2 0 100-4 2 2 0 000 4z" />
+                        </svg>
+                      </div>
 
-                    {/* Select dropdown */}
-                    <select
-                      className="w-full appearance-none bg-white text-purple-900 border border-purple-700 rounded-xl py-2 pl-9 pr-8 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                      value={selectedLocation}
-                      onChange={(e) => {
-                        const newId = e.target.value;
-                        setSelectedLocation(newId);
-                        if (newId) {
-                          router.push(`/assistants?locationId=${newId}`);
-                        }
-                      }}
-                    >
-                 
-                      {locations.map((loc) => (
-                        <option key={loc.id} value={loc.id}>
-                          {loc.address}
-                        </option>
-                      ))}
-                    </select>
-
-                    {/* Chevron (dropdown arrow) on the right */}
-                    <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
-                      <svg
-                        className="w-4 h-4 text-purple-700"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                        aria-hidden="true"
+                      {/* Select dropdown */}
+                      <select
+                        className="w-full appearance-none bg-white text-purple-900 border border-purple-700 rounded-xl py-2 pl-9 pr-8 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                        value={selectedLocation}
+                        onChange={(e) => {
+                          const newId = e.target.value;
+                          setSelectedLocation(newId);
+                          if (newId) {
+                            router.push(`/assistants?locationId=${newId}`);
+                          }
+                        }}
                       >
-                        <path
-                          fillRule="evenodd"
-                          d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
+                        {locations.map((loc) => (
+                          <option key={loc.id} value={loc.id}>
+                            {loc.address}
+                          </option>
+                        ))}
+                      </select>
+
+                      {/* Chevron (dropdown arrow) on the right */}
+                      <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+                        <svg
+                          className="w-4 h-4 text-purple-700"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
             {/* The rest of the static nav items */}
             <Link
               href="/dashboard"
@@ -235,185 +239,194 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
               </div>
               {!isCollapsed && <span>Dashboard</span>}
             </Link>
-            <Link
-              href={`/inbox?locationId=${selectedLocation}`}
-              className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
-                isActive("/inbox")
-                  ? "bg-white text-purple-900 shadow-lg transform scale-105"
-                  : "text-purple-100 hover:bg-purple-700 hover:text-white"
-              } ${isCollapsed ? "justify-center" : ""}`}
-            >
-              <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                  isActive("/inbox") ? "bg-purple-100" : "bg-purple-700"
-                }`}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+            {selectedLocation && (
+              <>
+                <Link
+                  href={`/inbox?locationId=${selectedLocation}`}
+                  className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
+                    isActive("/inbox")
+                      ? "bg-white text-purple-900 shadow-lg transform scale-105"
+                      : "text-purple-100 hover:bg-purple-700 hover:text-white"
+                  } ${isCollapsed ? "justify-center" : ""}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-              {!isCollapsed && <span>Inbox</span>}
-            </Link>
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      isActive("/inbox") ? "bg-purple-100" : "bg-purple-700"
+                    }`}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  {!isCollapsed && <span>Inbox</span>}
+                </Link>
 
-            <Link
-              href={`/assistants?locationId=${selectedLocation}`}
-              className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
-                isActive("/assistants")
-                  ? "bg-white text-purple-900 shadow-lg transform scale-105"
-                  : "text-purple-100 hover:bg-purple-700 hover:text-white"
-              } ${isCollapsed ? "justify-center" : ""}`}
-            >
-              <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                  isActive("/assistants") ? "bg-purple-100" : "bg-purple-700"
-                }`}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+                <Link
+                  href={`/assistants?locationId=${selectedLocation}`}
+                  className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
+                    isActive("/assistants")
+                      ? "bg-white text-purple-900 shadow-lg transform scale-105"
+                      : "text-purple-100 hover:bg-purple-700 hover:text-white"
+                  } ${isCollapsed ? "justify-center" : ""}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-              {!isCollapsed && <span>Assistants</span>}
-            </Link>
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      isActive("/assistants")
+                        ? "bg-purple-100"
+                        : "bg-purple-700"
+                    }`}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  {!isCollapsed && <span>Assistants</span>}
+                </Link>
 
-            {/* Schedule */}
-            <Link
-              href="/schedule"
-              className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
-                isActive("/schedule")
-                  ? "bg-white text-purple-900 shadow-lg transform scale-105"
-                  : "text-purple-100 hover:bg-purple-700 hover:text-white"
-              } ${isCollapsed ? "justify-center" : ""}`}
-            >
-              <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                  isActive("/schedule") ? "bg-purple-100" : "bg-purple-700"
-                }`}
-              >
-                <svg
-                  className="w-4 h-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
+                {/* Schedule */}
+                <Link
+                  href="/schedule"
+                  className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
+                    isActive("/schedule")
+                      ? "bg-white text-purple-900 shadow-lg transform scale-105"
+                      : "text-purple-100 hover:bg-purple-700 hover:text-white"
+                  } ${isCollapsed ? "justify-center" : ""}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-              {!isCollapsed && <span>Schedule</span>}
-            </Link>
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      isActive("/schedule") ? "bg-purple-100" : "bg-purple-700"
+                    }`}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  {!isCollapsed && <span>Schedule</span>}
+                </Link>
 
-            <Link
-              href={`/phone-numbers?locationId=${selectedLocation}`}
-              className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
-                isActive("/phone-numbers")
-                  ? "bg-white text-purple-900 shadow-lg transform scale-105"
-                  : "text-purple-100 hover:bg-purple-700 hover:text-white"
-              } ${isCollapsed ? "justify-center" : ""}`}
-            >
-              <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                  isActive("/phone-numbers") ? "bg-purple-100" : "bg-purple-700"
-                }`}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+                <Link
+                  href={`/phone-numbers?locationId=${selectedLocation}`}
+                  className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
+                    isActive("/phone-numbers")
+                      ? "bg-white text-purple-900 shadow-lg transform scale-105"
+                      : "text-purple-100 hover:bg-purple-700 hover:text-white"
+                  } ${isCollapsed ? "justify-center" : ""}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                  />
-                </svg>
-              </div>
-              {!isCollapsed && <span>Phone Numbers</span>}
-            </Link>
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      isActive("/phone-numbers")
+                        ? "bg-purple-100"
+                        : "bg-purple-700"
+                    }`}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                      />
+                    </svg>
+                  </div>
+                  {!isCollapsed && <span>Phone Numbers</span>}
+                </Link>
 
-            <Link
-              href={`/addresses?locationId=${selectedLocation}`}
-              className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
-                isActive("/addresses")
-                  ? "bg-white text-purple-900 shadow-lg transform scale-105"
-                  : "text-purple-100 hover:bg-purple-700 hover:text-white"
-              } ${isCollapsed ? "justify-center" : ""}`}
-            >
-              <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                  isActive("/addresses") ? "bg-purple-100" : "bg-purple-700"
-                }`}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+                <Link
+                  href={`/addresses?locationId=${selectedLocation}`}
+                  className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
+                    isActive("/addresses")
+                      ? "bg-white text-purple-900 shadow-lg transform scale-105"
+                      : "text-purple-100 hover:bg-purple-700 hover:text-white"
+                  } ${isCollapsed ? "justify-center" : ""}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 7h18M5 11h14M7 15h10M9 19h6"
-                  />
-                </svg>
-              </div>
-              {!isCollapsed && <span>Addresses</span>}
-            </Link>
-             <Link
-              href={`/leads?locationId=${selectedLocation}`}
-              className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
-                isActive("/leads")
-                  ? "bg-white text-purple-900 shadow-lg transform scale-105"
-                  : "text-purple-100 hover:bg-purple-700 hover:text-white"
-              } ${isCollapsed ? "justify-center" : ""}`}
-            >
-              <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                  isActive("/leads") ? "bg-purple-100" : "bg-purple-700"
-                }`}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      isActive("/addresses") ? "bg-purple-100" : "bg-purple-700"
+                    }`}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 7h18M5 11h14M7 15h10M9 19h6"
+                      />
+                    </svg>
+                  </div>
+                  {!isCollapsed && <span>Addresses</span>}
+                </Link>
+
+                <Link
+                  href={`/leads?locationId=${selectedLocation}`}
+                  className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
+                    isActive("/leads")
+                      ? "bg-white text-purple-900 shadow-lg transform scale-105"
+                      : "text-purple-100 hover:bg-purple-700 hover:text-white"
+                  } ${isCollapsed ? "justify-center" : ""}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-              </div>
-              {!isCollapsed && <span>Leads</span>}
-            </Link>
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      isActive("/leads") ? "bg-purple-100" : "bg-purple-700"
+                    }`}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
+                    </svg>
+                  </div>
+                  {!isCollapsed && <span>Leads</span>}
+                </Link>
+              </>
+            )}
           </nav>
         </div>
 
@@ -466,7 +479,9 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
           </button>
         </div>
       </aside>
-      <main className="flex-1 bg-gray-50 overflow-y-auto h-screen">{children}</main>
+      <main className="flex-1 bg-gray-50 overflow-y-auto h-screen">
+        {children}
+      </main>
     </div>
   );
 }

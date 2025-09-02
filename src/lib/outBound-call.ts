@@ -7,7 +7,7 @@ declare global {
 
 if (!global.__outboundCronStarted) {
   cron.schedule(
-    "*/10 * 9-17 * * *", 
+    "*/10 * 9-16 * * *", 
     // └── every 10 seconds, hours 9 → 16 (which is 9:00:00 up to 16:59:59)
     async () => {
       console.log("🚀 Running outbound sequencer (Sydney 9am–5pm window)");
