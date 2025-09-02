@@ -47,7 +47,7 @@ export default function SignupPage() {
             </div>
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Create your account</h2>
-          <p className="text-gray-600">Join TrueLeads CRM and start automating your sales process</p>
+          <p className="text-gray-600">Join SuhaviLeads CRM and start automating your sales process</p>
         </div>
 
         {/* Form */}

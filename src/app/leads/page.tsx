@@ -75,7 +75,7 @@ export default function LeadsPage() {
   }, [locationIdFromUrl]); // refetch if location changes
 
   // Upload CSV to API
-   const handleFileUpload = async (
+  const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
@@ -236,6 +236,23 @@ export default function LeadsPage() {
             </div>
           )}
         </div>
+        {/* <div className="mb-8">
+          <button
+            onClick={async () => {
+              const res = await fetch("/api/start-calls", { method: "POST" });
+              if (res.ok) {
+                alert("Calls started!");
+                fetchLeads(); // refresh table
+              } else {
+                const data = await res.json();
+                alert("Failed: " + data.error);
+              }
+            }}
+            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition"
+          >
+            Start Calling Leads
+          </button>
+        </div> */}
 
         {/* Leads Table */}
         {leads.length > 0 && !isLoading && (

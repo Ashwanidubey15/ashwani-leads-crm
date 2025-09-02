@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TrueLeads CRM",
+  title: "SuhaviLeads CRM",
   description: "AI-Powered CRM with Phone Number Management",
 };
 
