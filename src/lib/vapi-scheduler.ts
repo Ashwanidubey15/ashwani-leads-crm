@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import cron from "node-cron";
 import { fetchAllCallsScheduler } from "./vapi";
 import { processConversation } from "./processConversation";
+import logger from "../utility/logger.js"; 
 
 const prisma = new PrismaClient();
 
@@ -11,7 +12,7 @@ declare global {
 
 if (!global.__vapiCronStarted) {
   cron.schedule("*/10 * * * * *", async () => {
-    console.log("Running every 10 seconds...");
+    logger.info("Running every 10 seconds...");
     try {
       const calls = await fetchAllCallsScheduler();
 

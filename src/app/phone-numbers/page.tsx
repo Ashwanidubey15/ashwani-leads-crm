@@ -28,9 +28,11 @@ interface Assistant {
   firstMessage: string | null;
   createdAt: string;
   updatedAt: string;
+  phoneNumbers: UserNumber[];
 }
 
 export default function PhoneNumbersPage() {
+  const [errorPurchase, setErrorPurchase] = useState("");
   const [showInput, setShowInput] = useState(false);
   const [loadingCall, setLoadingCall] = useState(false);
   const [customerNumber, setCustomerNumber] = useState("");
@@ -107,10 +109,10 @@ export default function PhoneNumbersPage() {
   // Fetch user's assistants
   async function fetchAssistants() {
     try {
-      let qs = "?hasNumber=false";
+      let qs = "";
 
       if (locationIdFromUrl) {
-        qs += `&locationId=${encodeURIComponent(locationIdFromUrl)}`;
+        qs += `?locationId=${encodeURIComponent(locationIdFromUrl)}`;
       }
       const res = await fetch(`/api/assistants${qs}`);
       if (!res.ok) {
@@ -187,7 +189,7 @@ export default function PhoneNumbersPage() {
       setError("");
       setSuccess("");
       const res = await fetch(
-         `/api/twilio/search-numbers?country=AU&type=local&limit=20`
+        `/api/twilio/search-numbers?country=AU&type=local&limit=20`
       );
       if (!res.ok) {
         throw new Error("Failed to search numbers");
@@ -321,9 +323,11 @@ export default function PhoneNumbersPage() {
   const handleCall = async () => {
     if (!customerNumber || !assistantId) return;
 
+    setErrorPurchase(""); // clear old errors
     setLoading(true);
+
     try {
-      await fetch("/api/call-customer", {
+      const res = await fetch("/api/call-customer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -331,7 +335,18 @@ export default function PhoneNumbersPage() {
           assistantId,
         }),
       });
-    } catch (err) {
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // Show API error in UI
+        setErrorPurchase(data.message || "Something went wrong");
+        return;
+      }
+
+      console.log("Call started:", data);
+    } catch (err: any) {
+      setErrorPurchase(err.message);
       console.error("Call failed:", err);
     } finally {
       setLoading(false);
@@ -522,11 +537,13 @@ export default function PhoneNumbersPage() {
                   border-gray-300 focus:ring-purple-500 focus:border-purple-500`}
                   >
                     <option value="">Select an assistant</option>
-                    {assistants.map((assistant) => (
-                      <option key={assistant.id} value={assistant.id}>
-                        {assistant.name}
-                      </option>
-                    ))}
+                    {assistants
+                      .filter((item) => item?.phoneNumbers.length > 0)
+                      .map((assistant) => (
+                        <option key={assistant.id} value={assistant.id}>
+                          {assistant.name}
+                        </option>
+                      ))}
                   </select>
                 </div>
               </div>
@@ -549,6 +566,11 @@ export default function PhoneNumbersPage() {
                   {loading ? "Calling..." : "Call Customer"}
                 </Button>
               </div>
+              {errorPurchase && (
+                <p className="px-4 text-red-600 text-sm font-medium">
+                  {errorPurchase}
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -638,11 +660,13 @@ export default function PhoneNumbersPage() {
                   }`}
                 >
                   <option value="">Select an assistant</option>
-                  {assistants.map((assistant) => (
-                    <option key={assistant.id} value={assistant.id}>
-                      {assistant.name}
-                    </option>
-                  ))}
+                  {assistants
+                    .filter((item) => item?.phoneNumbers?.length === 0)
+                    .map((assistant) => (
+                      <option key={assistant.id} value={assistant.id}>
+                        {assistant.name}
+                      </option>
+                    ))}
                 </select>
 
                 {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
@@ -652,22 +676,22 @@ export default function PhoneNumbersPage() {
                 </p>
               </div>
             </div>
-              <div className="flex items-center gap-4 mb-2">
-                <Button
-                  onClick={handleSearchNumbers}
-                  disabled={searching}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
-                >
-                  {searching && <Loader size="sm" />}
-                  Search
-                </Button>
-                {searchResults.length > 0 && (
-                  <span className="text-sm text-gray-600">
-                    {searchResults.length} suggestion
-                    {searchResults.length > 1 ? "s" : ""} found
-                  </span>
-                )}
-              </div>
+            <div className="flex items-center gap-4 mb-2">
+              <Button
+                onClick={handleSearchNumbers}
+                disabled={searching}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+              >
+                {searching && <Loader size="sm" />}
+                Search
+              </Button>
+              {searchResults.length > 0 && (
+                <span className="text-sm text-gray-600">
+                  {searchResults.length} suggestion
+                  {searchResults.length > 1 ? "s" : ""} found
+                </span>
+              )}
+            </div>
             {searchResults.length > 0 && (
               <div className="mt-4 overflow-hidden rounded-2xl border border-gray-200">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -725,7 +749,7 @@ export default function PhoneNumbersPage() {
                 </table>
               </div>
             )}
-             {/* <div className="text-center mt-6">
+            {/* <div className="text-center mt-6">
                 <button
                   onClick={handlePurchase}
                   // disabled={loading || !areaCode.trim() || !label.trim() || !selectedAssistantId}

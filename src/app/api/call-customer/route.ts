@@ -38,6 +38,7 @@ export async function POST(req: Request) {
         Authorization: `Bearer ${process.env.VAPI_PRIVATE_KEY}`,
         "Content-Type": "application/json",
       },
+
       body: JSON.stringify({
         assistantId: outBoundAssistant?.vapiAssistantId,
         phoneNumberId: outBoundAssistant?.phoneNumbers[0].phoneNumberId,
@@ -47,17 +48,20 @@ export async function POST(req: Request) {
 
     if (!res.ok) {
       const errorText = await res.text();
+      console.log("errr", errorText)
       const nextDate = new Date();
       nextDate.setDate(nextDate.getDate() + 1);
-      await prisma.lead.update({
-        where: { id: leadId },
-        data: {
-          status: "PENDING",
-          callId: null,
-          retries: { increment: 1 },
-          nextCallAt: nextDate, // retry tomorrow
-        },
-      });
+      if (leadId) {
+        await prisma.lead.update({
+          where: { id: leadId },
+          data: {
+            status: "PENDING",
+            callId: null,
+            retries: { increment: 1 },
+            nextCallAt: nextDate, // retry tomorrow
+          },
+        });
+      }
       return Response.json(
         { error: `Vapi API error: ${errorText}` },
         { status: res.status }

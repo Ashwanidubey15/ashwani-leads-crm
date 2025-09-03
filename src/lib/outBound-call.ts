@@ -1,17 +1,21 @@
 import cron from "node-cron";
 import { startNextCall, startScheduleCall } from "./startNextCall";
+import logger from "../utility/logger.js"; 
+
 
 declare global {
   var __outboundCronStarted: boolean | undefined;
 }
 
 if (!global.__outboundCronStarted) {
-  cron.schedule(
-    "*/10 * 9-16 * * *", 
+  // cron.schedule(
+  //   "*/10 * 9-16 * * *",
     // └── every 10 seconds, hours 9 → 16 (which is 9:00:00 up to 16:59:59)
+    cron.schedule("*/10 * * * * *",
     async () => {
-      console.log("🚀 Running outbound sequencer (Sydney 9am–5pm window)");
+      logger.info("🚀 Running outbound sequencer ");// (Sydney 9am–5pm window)
       try {
+        
         await startNextCall();
         // await startScheduleCall();
       } catch (err) {
@@ -19,7 +23,7 @@ if (!global.__outboundCronStarted) {
       }
     },
     {
-      timezone: "Australia/Sydney", 
+      // timezone: "Australia/Sydney",
       // timezone: "Asia/Kolkata", // India timezone
     }
   );
