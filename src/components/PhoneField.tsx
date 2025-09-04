@@ -16,22 +16,24 @@ interface PhoneFieldProps {
   className?: string;
 }
 
-const StyledInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function StyledInput(
-  props,
-  ref
-) {
-  const { className = "", ...rest } = props;
-  return (
-    <input
-      ref={ref}
-      {...rest}
-      className={
-        "w-full px-4 py-3 border border-gray-300 rounded-l-none rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors " +
-        className
-      }
-    />
-  );
-});
+// Custom input for Tailwind styling
+const StyledInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+  function StyledInput(props, ref) {
+    const { className = "", ...rest } = props;
+    return (
+      <input
+        ref={ref}
+        {...rest}
+        className={
+          "w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 " +
+          "bg-white dark:bg-gray-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-300 " +
+          "focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors " +
+          className
+        }
+      />
+    );
+  }
+);
 
 export default function PhoneField(props: PhoneFieldProps) {
   const {
@@ -46,37 +48,35 @@ export default function PhoneField(props: PhoneFieldProps) {
     className = "",
   } = props;
 
-  // Manage focus styling on the container for a nicer look
   const [isFocused, setIsFocused] = useState(false);
 
   return (
     <div className={className}>
       {label && (
-        <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
           {label}
           {required && <span className="text-red-500"> *</span>}
         </label>
       )}
+
       <div
-        className={
-          `rounded-xl border ${error ? "border-red-500" : "border-gray-300"} bg-white ` +
-          `${isFocused ? "ring-2 ring-purple-500 border-purple-500" : ""}`
-        }
+        className={`relative rounded-xl border ${
+          error ? "border-red-500" : "border-gray-300 dark:border-gray-600"
+        } bg-white dark:bg-purple-400 ${isFocused ? "ring-2 ring-purple-500 border-purple-500" : ""}`}
       >
-        <div className="px-0">
-          <PhoneInput
-            id={id}
-            value={(value as Value) || ""}
-            onChange={(val) => onChange(val as string)}
-            inputComponent={StyledInput as any}
-            placeholder={placeholder}
-            disabled={disabled}
-            // onFocus={() => setIsFocused(true)}
-            // onBlur={() => onChange(value)}
-            className="w-full"
-          />
-        </div>
+        <PhoneInput
+          id={id}
+          value={(value as Value) || ""}
+          onChange={(val) => onChange(val as string)}
+          inputComponent={StyledInput as any}
+          placeholder={placeholder}
+          disabled={disabled}
+          className="w-full"
+          // onFocus={() => setIsFocused(true)}
+          // onBlur={() => setIsFocused(false)}
+        />
       </div>
+
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   );

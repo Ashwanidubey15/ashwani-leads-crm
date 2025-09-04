@@ -47,13 +47,13 @@ export async function startNextCall() {
 }
 
 export async function startScheduleCall() {
+  // Find the first pending or failed schedule whose date is today or past
   const callSchedule = await prisma.schedule.findFirst({
     where: {
-      scheduleDate: {
-        lt: new Date(),
-      },
+      scheduleDate: { lte: new Date() },
+      status: { in: ["PENDING", "FAILED"] },
     },
-    orderBy: { scheduleDate: "desc" },
+    orderBy: { scheduleDate: "asc" },
     include: {
       contact: {
         select: {
@@ -66,16 +66,45 @@ export async function startScheduleCall() {
   });
 
   if (!callSchedule) {
-    console.log("no call schedule...");
+    console.log("No pending call schedule for today.");
     return;
   }
 
-  // await fetch(`${process.env.NEXTAUTH_URL}/api/call-customer`, {
-  //   method: "POST",
-  //   headers: { "Content-Type": "application/json" },
-  //   body: JSON.stringify({
-  //     customerNumber: callSchedule.contact.phoneNumber,
-  //     assistantId: callSchedule.contact.assistantId,
-  //   }),
-  // });
+  try {
+    const response = await fetch(
+      `${process.env.NEXTAUTH_URL}/api/call-customer`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerNumber: callSchedule.contact.phoneNumber,
+          assistantId: callSchedule.contact.assistantId,
+        }),
+      }
+    );
+
+    console.log("Call API response status:", response.status);
+
+    if (response.ok) {
+      // Update status as completed
+      console.log("Updating schedule status to COMPLETED...");
+      await prisma.schedule.update({
+        where: { id: callSchedule.id },
+        data: { status: "COMPLETED" },
+      });
+    } else {
+      const nextDate = new Date();
+      nextDate.setDate(nextDate.getDate() + 1);
+      console.log("Next schedule date:", nextDate);
+
+      // Reschedule for next day and mark as FAILED
+
+      await prisma.schedule.update({
+        where: { id: callSchedule.id },
+        data: { scheduleDate: nextDate, status: "FAILED" },
+      });
+    }
+  } catch (err) {
+    console.error("Error while calling customer:", err);
+  }
 }

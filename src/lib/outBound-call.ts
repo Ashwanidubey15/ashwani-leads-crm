@@ -17,7 +17,7 @@ if (!global.__outboundCronStarted) {
       try {
         
         await startNextCall();
-        // await startScheduleCall();
+        await startScheduleCall();
       } catch (err) {
         console.error("Error in outbound sequencer:", err);
       }

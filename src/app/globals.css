@@ -1,3 +1,4 @@
+/* ✅ Only this import is needed in Tailwind v4 */
 @import "tailwindcss";
 
 :root {
@@ -25,10 +26,13 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-a:hover, button:hover, .cursor-pointer {
+a:hover,
+button:hover,
+.cursor-pointer {
   cursor: pointer;
 }
-/* globals.css */
+
+/* ✅ Your custom FullCalendar styles */
 .fc-header-toolbar {
   @apply bg-gradient-to-br from-slate-50 to-slate-200 p-4 border-b border-slate-200;
 }
@@ -70,3 +74,46 @@ a:hover, button:hover, .cursor-pointer {
 .fc-event:hover {
   @apply scale-[1.02] shadow-xl;
 }
+/* Inputs, textareas, selects, buttons should use full foreground color */
+/* Inputs, textarea, select */
+input,
+textarea,
+select {
+  background-color: #ffffff;
+  color: #000000; /* black text */
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+/* Placeholder styling */
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280; /* gray placeholder */
+}
+
+/* Buttons */
+button {
+  background-color: #9333ea;
+  color: #ffffff; /* white text */
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Hover state */
+.phone-dropdown {
+  background-color: white; /* light mode */
+  color: black;
+}
+
+.dark .phone-dropdown {
+  background-color: #1f2937; /* dark mode */
+  color: white;
+}
+
+
+
+

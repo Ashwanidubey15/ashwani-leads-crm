@@ -21,7 +21,7 @@ export async function processConversation(
         content: `
           Extract name, email, company, and schedule date from this transcript.
 
-          - Today’s reference date is: 2025-08-25.
+          
           - Handle both relative and absolute dates:
             - Relative examples: "today", "tomorrow", "next week", "next month", "next year".
             - Absolute examples: "2026/12", "12 March 2026", "March 12", "26 September at 10 PM".
@@ -88,6 +88,7 @@ export async function processConversation(
             },
             data: {
               scheduleDate: parsedDate,
+              status: "PENDING",
             },
           });
         }

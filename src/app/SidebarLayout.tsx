@@ -160,14 +160,14 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
                     <div className="relative">
                       {/* Location icon on the left */}
                       <div className="absolute inset-y-0 left-2 flex items-center pointer-events-none">
-                        <svg
+                        {/* <svg
                           className="w-5 h-5 text-purple-700"
                           fill="currentColor"
                           viewBox="0 0 24 24"
                           aria-hidden="true"
                         >
                           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM12 11a2 2 0 100-4 2 2 0 000 4z" />
-                        </svg>
+                        </svg> */}
                       </div>
 
                       {/* Select dropdown */}

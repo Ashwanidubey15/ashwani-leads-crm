@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import './api/_init';
-
-// Remove SessionProvider from server component
+import "./api/_init";
 import SidebarLayout from "./SidebarLayout";
 
 const geistSans = Geist({
@@ -17,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SuhaviLeads CRM",
+  title: "DemoLeads CRM",
   description: "AI-Powered CRM with Phone Number Management",
 };
 
@@ -27,10 +25,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en"> 
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-black dark:bg-gray-900 dark:text-white`}
+      >
         <SidebarLayout>{children}</SidebarLayout>
       </body>
     </html>
   );
 }
+
