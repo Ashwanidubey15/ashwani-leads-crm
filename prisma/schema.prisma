@@ -138,13 +138,16 @@ model Locations {
   assistants Assistant[]
 }
 model Schedule {
-  id          String    @id @default(cuid())
-  contact     Contact   @relation(fields: [contactId], references: [id])
-  contactId   String
+  id           String    @id @default(cuid())
+  contact      Contact   @relation(fields: [contactId], references: [id])
+  contactId    String
   scheduleDate DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  status       String    @default("PENDING") // PENDING | COMPLETED | FAILED
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  status       String    @default("PENDING") // values: PENDING | IN_PROGRESS | ENDED
+  callId       String?   @unique
+  retries      Int       @default(0)
+  
 }
 
 model Lead {

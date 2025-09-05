@@ -26,7 +26,7 @@ const StyledInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLI
         {...rest}
         className={
           "w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 " +
-          "bg-white dark:bg-gray-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-300 " +
+          "bg-white  text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-300 " +
           "focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors " +
           className
         }

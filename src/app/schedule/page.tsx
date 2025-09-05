@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -27,20 +28,37 @@ export default function SchedulePage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [visibleEvents, setVisibleEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
-  const [currentRange, setCurrentRange] = useState<{ start: Date; end: Date } | null>(null);
+  const [currentRange, setCurrentRange] = useState<{
+    start: Date;
+    end: Date;
+  } | null>(null);
   const [showDetail, setShowDetails] = useState({
     open: false,
     contactId: "",
   });
 
+  const searchParams = useSearchParams();
+  const locationIdFromUrl = searchParams?.get("locationId") ?? null;
+
   // Fetch API schedules and map to events
   useEffect(() => {
     let ignore = false;
+
     async function load() {
       setLoading(true);
       try {
-        const res = await fetch("/api/contacts", { cache: "no-store" });
+        let qs = "";
+        if (locationIdFromUrl) {
+          qs = `?locationId=${encodeURIComponent(locationIdFromUrl)}`;
+        }
+
+        const res = await fetch(`/api/contacts${qs}`, { cache: "no-store" });
+        if (!res.ok) {
+          throw new Error("Failed to fetch contacts");
+        }
+
         const contacts: ApiContact[] = await res.json();
+
         if (!ignore) {
           const mapped = contacts.flatMap((c) =>
             c.schedules
@@ -61,15 +79,18 @@ export default function SchedulePage() {
           );
           setEvents(mapped);
         }
+      } catch (error) {
+        console.error("Failed to fetch contacts:", error);
       } finally {
         setLoading(false);
       }
     }
+
     load();
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [locationIdFromUrl]);
 
   // Handle visible events count when month/week/day changes
   const handleDatesSet = (arg: any) => {
@@ -133,7 +154,7 @@ export default function SchedulePage() {
         <div className="flex gap-6">
           {/* Calendar */}
           <div className="w-full transition-all duration-500 ease-in-out">
-            <div className=" text-black backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden">
+            <div className="text-black backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden">
               <FullCalendar
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
@@ -145,9 +166,7 @@ export default function SchedulePage() {
                 events={events}
                 datesSet={handleDatesSet}
                 eventContent={({ event }) => (
-                  <div
-                    className="bg-purple-600 text-white p-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer border border-white/20"
-                  >
+                  <div className="bg-purple-600 text-white p-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer border border-white/20">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-2 h-2 bg-white/80 rounded-full animate-pulse"></div>
                       <span className="font-semibold text-sm truncate">

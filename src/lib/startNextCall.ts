@@ -1,4 +1,5 @@
 // lib/startNextCall.ts
+import logger from "@/utility/logger";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -48,10 +49,21 @@ export async function startNextCall() {
 
 export async function startScheduleCall() {
   // Find the first pending or failed schedule whose date is today or past
+
+  const inProgress = await prisma.schedule.findFirst({
+    where: { status: "IN_PROGRESS" },
+  });
+
+  if (inProgress) {
+    logger.info("Call in progress");
+    console.log("A call is already in progress. Skipping...");
+    return;
+  }
+
   const callSchedule = await prisma.schedule.findFirst({
     where: {
       scheduleDate: { lte: new Date() },
-      status: { in: ["PENDING", "FAILED"] },
+      status: "PENDING",
     },
     orderBy: { scheduleDate: "asc" },
     include: {
@@ -83,14 +95,13 @@ export async function startScheduleCall() {
       }
     );
 
-    console.log("Call API response status:", response.status);
-
     if (response.ok) {
       // Update status as completed
       console.log("Updating schedule status to COMPLETED...");
+      const data = await response.json();
       await prisma.schedule.update({
         where: { id: callSchedule.id },
-        data: { status: "COMPLETED" },
+        data: { callId: data.id, status: "IN_PROGRESS" },
       });
     } else {
       const nextDate = new Date();
@@ -98,10 +109,10 @@ export async function startScheduleCall() {
       console.log("Next schedule date:", nextDate);
 
       // Reschedule for next day and mark as FAILED
-
+      console.log("Updating schedule status to FAILED and rescheduling...");
       await prisma.schedule.update({
         where: { id: callSchedule.id },
-        data: { scheduleDate: nextDate, status: "FAILED" },
+        data: { scheduleDate: nextDate, status: "PENDING", callId: null },
       });
     }
   } catch (err) {

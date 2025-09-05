@@ -79,11 +79,7 @@ button:hover,
 input,
 textarea,
 select {
-  background-color: #ffffff;
   color: #000000; /* black text */
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.75rem;
 }
 
 /* Placeholder styling */
@@ -92,26 +88,9 @@ textarea::placeholder {
   color: #6b7280; /* gray placeholder */
 }
 
-/* Buttons */
-button {
-  background-color: #9333ea;
-  color: #ffffff; /* white text */
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
 /* Hover state */
 .phone-dropdown {
-  background-color: white; /* light mode */
   color: black;
-}
-
-.dark .phone-dropdown {
-  background-color: #1f2937; /* dark mode */
-  color: white;
 }
 
 

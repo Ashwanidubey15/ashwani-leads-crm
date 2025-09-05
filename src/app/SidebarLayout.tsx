@@ -303,37 +303,6 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
                   {!isCollapsed && <span>Assistants</span>}
                 </Link>
 
-                {/* Schedule */}
-                <Link
-                  href="/schedule"
-                  className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
-                    isActive("/schedule")
-                      ? "bg-white text-purple-900 shadow-lg transform scale-105"
-                      : "text-purple-100 hover:bg-purple-700 hover:text-white"
-                  } ${isCollapsed ? "justify-center" : ""}`}
-                >
-                  <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      isActive("/schedule") ? "bg-purple-100" : "bg-purple-700"
-                    }`}
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </div>
-                  {!isCollapsed && <span>Schedule</span>}
-                </Link>
-
                 <Link
                   href={`/phone-numbers?locationId=${selectedLocation}`}
                   className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
@@ -364,6 +333,37 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
                     </svg>
                   </div>
                   {!isCollapsed && <span>Phone Numbers</span>}
+                </Link>
+
+                {/* Schedule */}
+                <Link
+                  href={`/schedule?locationId=${selectedLocation}`}
+                  className={`py-3 px-4 rounded-xl font-medium flex items-center gap-3 transition-all duration-200 ${
+                    isActive("/schedule")
+                      ? "bg-white text-purple-900 shadow-lg transform scale-105"
+                      : "text-purple-100 hover:bg-purple-700 hover:text-white"
+                  } ${isCollapsed ? "justify-center" : ""}`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      isActive("/schedule") ? "bg-purple-100" : "bg-purple-700"
+                    }`}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  {!isCollapsed && <span>Schedule</span>}
                 </Link>
 
                 <Link

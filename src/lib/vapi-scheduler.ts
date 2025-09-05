@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import cron from "node-cron";
 import { fetchAllCallsScheduler } from "./vapi";
 import { processConversation } from "./processConversation";
-import logger from "../utility/logger.js"; 
+import logger from "../utility/logger.js";
 
 const prisma = new PrismaClient();
 
@@ -118,49 +118,97 @@ if (!global.__vapiCronStarted) {
                 type: call.type,
               },
             });
-
             //  Optionally run GPT extraction on update
             await processConversation(
               call.id,
               userNumber.userId,
               userNumber.assistantId
             );
+
             if (call.status === "ended") {
+              console.log("call.endedReason11111" , call.endedReason);
+              
               try {
+                // ---- Lead handling ----
                 const lead = await prisma.lead.findUnique({
                   where: { callId: call.id },
                 });
 
                 if (!lead) {
-                  console.log("Not found", call.id);
-                  return;
+                  console.log("Lead not found for call:", call.id);
+                } else {
+                  if (
+                    call.endedReason === "silence-timed-out" ||
+                    call.endedReason === "customer-did-not-answer" || 
+                    call.endedReason === "customer-busy"
+                  ) {
+                    const nextDate = new Date();
+                    nextDate.setDate(nextDate.getDate() + 1);
+
+                    await prisma.lead.update({
+                      where: { callId: call.id },
+                      data: {
+                        status: "PENDING",
+                        callId: null,
+                        retries: { increment: 1 },
+                        nextCallAt: nextDate, // retry tomorrow
+                      },
+                    });
+                    console.log("Lead reset to PENDING (retry possible)");
+                  } else {
+                    await prisma.lead.update({
+                      where: { callId: call.id },
+                      data: { status: "ENDED", callId: null },
+                    });
+                    console.log("Lead updated to ENDED");
+                  }
                 }
 
-                if (
-                  call.endedReason === "silence-timed-out" ||
-                  call.endedReason === "customer-did-not-answer"
-                ) {
-                  const nextDate = new Date();
-                  nextDate.setDate(nextDate.getDate() + 1);
-                  await prisma.lead.update({
-                    where: { callId: call.id },
-                    data: {
-                      status: "PENDING",
-                      callId: null,
-                      retries: { increment: 1 },
-                      nextCallAt: nextDate, // retry tomorrow
-                    },
-                  });
-                  console.log("Lead reset to PENDING (retry possible)");
+                // ---- Schedule handling ----
+                const schedule = await prisma.schedule.findUnique({
+                  where: { callId: call.id },
+                });
+
+                if (!schedule) {
+                  console.log("Schedule not found for call:", call.id);
                 } else {
-                  await prisma.lead.update({
-                    where: { callId: call.id },
-                    data: { status: "ENDED", callId: null },
-                  });
-                  console.log("Lead updated to ENDED");
+                  if (
+                    call.endedReason === "silence-timed-out" ||
+                    call.endedReason === "customer-did-not-answer"  || 
+                    call.endedReason === "customer-busy"
+                  ) {
+                    const nextDate = new Date();
+                    nextDate.setDate(nextDate.getDate() + 1);
+
+                    await prisma.schedule.update({
+                      where: { callId: call.id },
+                      data: {
+                        status: "PENDING",
+                        callId: null,
+                        retries: { increment: 1 },
+                        scheduleDate: nextDate,
+                      },
+                    });
+
+                    console.log(
+                      `Schedule ${schedule.id} reset to PENDING (retry tomorrow)`
+                    );
+                  } else {
+                    await prisma.schedule.update({
+                      where: { callId: call.id },
+                      data: {
+                        status: "ENDED",
+                        callId: null,
+                      },
+                    });
+
+                    console.log(
+                      `Schedule ${schedule.id} marked as COMPLETED/ENDED`
+                    );
+                  }
                 }
               } catch (err: any) {
-                console.log("Error updating lead:", err);
+                console.error("Error updating lead/schedule:", err);
               }
             }
           }
