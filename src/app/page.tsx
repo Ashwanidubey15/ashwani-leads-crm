@@ -120,7 +120,7 @@
 //                 </svg>
 //               </div>
 //               <div>
-//                 <div className="text-xl font-bold text-gray-900">Suhavi Leads</div>
+//                 <div className="text-xl font-bold text-gray-900">Ashwani Leads</div>
 //                 <div className="text-xs text-purple-600 font-medium">CRM Platform</div>
 //               </div>
 //             </div>
@@ -398,7 +398,7 @@ export default function LoginPage() {
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome back
           </h2>
-          <p className="text-gray-600">Sign in to your SuhaviLeads CRM account</p>
+          <p className="text-gray-600">Sign in to your AshwaniLeads CRM account</p>
         </div>
 
         {/* Form */}

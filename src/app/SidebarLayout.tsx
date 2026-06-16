@@ -115,7 +115,7 @@ function SidebarContent({ children }: { children: React.ReactNode }) {
               {!isCollapsed && (
                 <div>
                   <div className="text-xl font-bold text-white">
-                    Suhavi Leads
+                    Ashwani Leads
                   </div>
                   <div className="text-xs text-purple-200 font-medium">
                     CRM Platform
