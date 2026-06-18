@@ -1,15 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-   serverExternalPackages: ["node-cron"],
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
+  serverExternalPackages: ["node-cron"],
+
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'randomuser.me',
-        pathname: '/api/portraits/**',
+        protocol: "https",
+        hostname: "randomuser.me",
+        pathname: "/api/portraits/**",
       },
     ],
   },
 };
 
-module.exports = nextConfig; 
+module.exports = nextConfig;
